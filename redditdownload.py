@@ -72,7 +72,7 @@ if __name__ == "__main__":
                         print '\tDownloaded %s to %s.' % (ITEM['url'],FILENAME)
                         D += 1
                     else:
-                        print '\tWRONG FILE TYPE: %s has type: %s!' % (ITEM['url'],INFO['content-type'])
+                        print '\tWRONG FILE TYPE: %s has type: %s!' % (ITEM['url'],FILETYPE)
                         S += 1
                 except HTTPError as ERROR:
                         print '\tHTTP ERROR: Code %s for %s.' % (ERROR.code,ITEM['url'])
