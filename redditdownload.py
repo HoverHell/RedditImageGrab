@@ -21,18 +21,20 @@ if __name__ == "__main__":
     PARSER.add_argument( 'reddit', metavar='r', help='Subreddit name.')
     PARSER.add_argument( 'dir', metavar='d', help='Dir to put downloaded files in.')
     PARSER.add_argument( '-last', metavar='l', default='', required=False, help='ID of the last downloaded file.')
+    PARSER.add_argument( '-update', default=False, action='store_true', required=False, help='Run until you encounter a file already downloaded.')
     ARGS = PARSER.parse_args()
  
     print 'Downloading images from "%s" subreddit' % (ARGS.reddit)
 
     ITEMS = getitems( ARGS.reddit, ARGS.last )
     N = D = E = S = F = 0
+    UPDATED = False
 
     # Create the specified directory if it doesn't already exist.
     if not pathexists( ARGS.dir ):
         mkdir( ARGS.dir )
 
-    while len(ITEMS) > 0:
+    while len(ITEMS) > 0 and UPDATED == False:
         LAST = ''
         N += len( ITEMS )
         for ITEM in ITEMS:
@@ -83,6 +85,10 @@ if __name__ == "__main__":
             else:
                 print '\tALREADY EXISTS: %s for %s already exists.' % (FILENAME,ITEM['url'])
                 E += 1
+                if ARGS.update == True:
+                    print '\tUpdate complete, exiting.'
+                    UPDATED = True
+                    break
             LAST = ITEM['id']
         ITEMS = getitems( ARGS.reddit, LAST )
 
