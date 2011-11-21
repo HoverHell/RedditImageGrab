@@ -1,3 +1,4 @@
 */*.jpg
 *.swp
 *.DS_Store
+*.sh
