@@ -1,4 +1,4 @@
-"""Download files from a reddit.com subreddit."""
+"""Download images from a reddit.com subreddit."""
 
 from urllib2 import urlopen, HTTPError, URLError 
 from httplib import InvalidURL
