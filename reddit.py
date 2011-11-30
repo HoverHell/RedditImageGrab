@@ -19,15 +19,13 @@ def getitems( subreddit, previd=''):
     return items
 
 if __name__ == "__main__":
-    LAST = ''
 
     print 'Recent items for Python.'
     ITEMS = getitems( 'python' )
     for ITEM in ITEMS:
         print '\t%s - %s' % (ITEM['title'], ITEM['url'])
-        LAST = ITEM['id']
 
     print 'Previous items for Python.'
-    OLDITEMS = getitems( 'python', LAST )
+    OLDITEMS = getitems( 'python', ITEMS[-1]['id'] )
     for ITEM in OLDITEMS:
         print '\t%s - %s' % (ITEM['title'], ITEM['url'])
