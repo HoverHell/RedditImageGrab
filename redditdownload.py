@@ -2,20 +2,10 @@
 
 from urllib2 import urlopen, HTTPError, URLError 
 from httplib import InvalidURL
-from json import JSONDecoder 
 from argparse import ArgumentParser
 from os.path import exists as pathexists, join as pathjoin
 from os import mkdir
-
-def getitems( reddit, last):
-    """Return list of items."""
-    url = 'http://www.reddit.com/r/%s.json' % ARGS.reddit
-    if last != '':
-        url = '%s?after=t3_%s' % (url, last)
-    json = urlopen( url ).read()
-    data = JSONDecoder().decode( json )
-    items = [ x['data'] for x in data['data']['children'] ]
-    return items
+from reddit import getitems
 
 if __name__ == "__main__": 
     PARSER = ArgumentParser( description='Downloads files with specified externsion from the specified subreddit.')
