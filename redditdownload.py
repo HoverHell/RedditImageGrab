@@ -14,7 +14,7 @@ if __name__ == "__main__":
     PARSER.add_argument('dir', metavar='d', help='Dir to put downloaded files in.')
     PARSER.add_argument('-last', metavar='l', default='', required=False, help='ID of the last downloaded file.')
     PARSER.add_argument('-score', metavar='s', default='0', type=int, required=False, help='Minimum score of images to download.')
-    PARSER.add_argument('-num', metavar='n', default='0', type=int, required=False, help='Number of images to process.')
+    PARSER.add_argument('-num', metavar='n', default='0', type=int, required=False, help='Number of images to download.')
     PARSER.add_argument('-update', default=False, action='store_true', required=False, help='Run until you encounter a file already downloaded.')
     PARSER.add_argument('-sfw', default=False, action='store_true', required=False, help='Download safe for work images only.')
     PARSER.add_argument('-nsfw', default=False, action='store_true', required=False, help='Download NSFW images only.')
@@ -114,7 +114,7 @@ if __name__ == "__main__":
 
             LAST = ITEM['id']
             nTotal += 1
-            if ARGS.num > 0 and nTotal >= ARGS.num:
+            if ARGS.num > 0 and nDownloaded >= ARGS.num:
                 print '\t%d images attempted, exiting.' % nTotal
                 FINISHED = True
                 break
