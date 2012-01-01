@@ -21,7 +21,7 @@ if __name__ == "__main__":
     print 'Downloading images from "%s" subreddit' % (ARGS.reddit)
 
     ITEMS = getitems(ARGS.reddit, ARGS.last)
-    N = D = E = S = F = 0
+    nTotal = nDownloaded = nErrors = nSkipped = nFailed = 0
     FINISHED = False
 
     # Create the specified directory if it doesn't already exist.
@@ -33,10 +33,10 @@ if __name__ == "__main__":
         for ITEM in ITEMS:
             if ITEM['score'] < ARGS.score:
                 print '\tSCORE: %s has score of %s which is lower than required score of %s.' % (ITEM['id'], ITEM['score'], ARGS.score)
-                S += 1
+                nSkipped += 1
             elif ARGS.sfw and ITEM['over_18']:
                 print '\tNSFW: %s is marked as NSFW.' % ITEM['id']
-                S += 1
+                nSkipped += 1
             else:
                 FILENAME = pathjoin(ARGS.dir, '%s.jpg' % (ITEM['id']))
                 # Don't download files multiple times!
@@ -72,32 +72,32 @@ if __name__ == "__main__":
                             FILE.write(FILEDATA)
                             FILE.close()
                             print '\tDownloaded %s to %s.' % (ITEM['url'], FILENAME)
-                            D += 1
+                            nDownloaded += 1
                         else:
                             print '\tWRONG FILE TYPE: %s has type: %s!' % (ITEM['url'], FILETYPE)
-                            S += 1
+                            nSkipped += 1
                     except HTTPError as ERROR:
                             print '\tHTTP ERROR: Code %s for %s.' % (ERROR.code, ITEM['url'])
-                            F += 1
+                            nFailed += 1
                     except URLError as ERROR:
                             print '\tURL ERROR: %s!' % ITEM['url']
-                            F += 1
+                            nFailed += 1
                     except InvalidURL as ERROR:
                             print '\tInvalid URL: %s!' % ITEM['url']
-                            F += 1
+                            nFailed += 1
                 else:
                     print '\tALREADY EXISTS: %s for %s already exists.' % (FILENAME, ITEM['url'])
-                    E += 1
+                    nErrors += 1
                     if ARGS.update:
                         print '\tUpdate complete, exiting.'
                         FINISHED = True
                         break
             LAST = ITEM['id']
-            N += 1
-            if ARGS.num > 0 and N >= ARGS.num:
-                print '\t%d images attempted , exiting.' % N
+            nTotal += 1
+            if ARGS.num > 0 and nTotal >= ARGS.num:
+                print '\t%d images attempted , exiting.' % nTotal
                 FINISHED = True
                 break
         ITEMS = getitems(ARGS.reddit, LAST)
 
-    print 'Downloaded %d of %d (Skipped %d, Exists %d)' % (D, N, S, E)
+    print 'Downloaded %d of %d (Skipped %d, Exists %d)' % (nDownloaded, nTotal, nSkipped, nErrors)
