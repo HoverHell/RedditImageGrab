@@ -39,10 +39,6 @@ if __name__ == "__main__":
     while len(ITEMS) > 0 and not FINISHED:
         LAST = ''
         for ITEM in ITEMS:
-            result = None
-            if ARGS.regex:
-                result = re.match(reRule, ITEM['title'])
-
             if ITEM['score'] < ARGS.score:
                 print '\tSCORE: %s has score of %s which is lower than required score of %s.' % (ITEM['id'], ITEM['score'], ARGS.score)
                 nSkipped += 1
@@ -52,7 +48,7 @@ if __name__ == "__main__":
             elif ARGS.nsfw and not ITEM['over_18']:
                 print '\tNot NSFW, skipping %s' % (ITEM['id'])
                 nSkipped += 1
-            elif ARGS.regex and not result:
+            elif ARGS.regex and re.match(reRule, ITEM['title']):
                 # TODO: too noisy
                 # print '\tRegex match failed'
                 nSkipped += 1
