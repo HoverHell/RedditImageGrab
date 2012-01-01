@@ -16,6 +16,7 @@ if __name__ == "__main__":
     PARSER.add_argument('-num', metavar='n', default='0', type=int, required=False, help='Number of images to process.')
     PARSER.add_argument('-update', default=False, action='store_true', required=False, help='Run until you encounter a file already downloaded.')
     PARSER.add_argument('-sfw', default=False, action='store_true', required=False, help='Download safe for work images only.')
+    PARSER.add_argument('-nsfw', default=False, action='store_true', required=False, help='Download only NSFW images only.')
     ARGS = PARSER.parse_args()
 
     print 'Downloading images from "%s" subreddit' % (ARGS.reddit)
@@ -36,6 +37,9 @@ if __name__ == "__main__":
                 nSkipped += 1
             elif ARGS.sfw and ITEM['over_18']:
                 print '\tNSFW: %s is marked as NSFW.' % ITEM['id']
+                nSkipped += 1
+            elif ARGS.nsfw and not ITEM['over_18']:
+                print '\tNot NSFW, skipping %s' % (ITEM['id'])
                 nSkipped += 1
             else:
                 FILENAME = pathjoin(ARGS.dir, '%s.jpg' % (ITEM['id']))
