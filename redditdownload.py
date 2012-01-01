@@ -1,5 +1,6 @@
 """Download images from a reddit.com subreddit."""
 
+import re
 from urllib2 import urlopen, HTTPError, URLError
 from httplib import InvalidURL
 from argparse import ArgumentParser
@@ -13,10 +14,11 @@ if __name__ == "__main__":
     PARSER.add_argument('dir', metavar='d', help='Dir to put downloaded files in.')
     PARSER.add_argument('-last', metavar='l', default='', required=False, help='ID of the last downloaded file.')
     PARSER.add_argument('-score', metavar='s', default='0', type=int, required=False, help='Minimum score of images to download.')
-    PARSER.add_argument('-num', metavar='n', default='0', type=int, required=False, help='Number of images to process.')
+    PARSER.add_argument('-num', metavar='n', default='0', type=int, required=False, help='Number of images to download.')
     PARSER.add_argument('-update', default=False, action='store_true', required=False, help='Run until you encounter a file already downloaded.')
     PARSER.add_argument('-sfw', default=False, action='store_true', required=False, help='Download safe for work images only.')
     PARSER.add_argument('-nsfw', default=False, action='store_true', required=False, help='Download NSFW images only.')
+    PARSER.add_argument('--regex', action='store', default=None, required=False, help='Use regex to filter based on title.')
     ARGS = PARSER.parse_args()
 
     print 'Downloading images from "%s" subreddit' % (ARGS.reddit)
@@ -29,9 +31,18 @@ if __name__ == "__main__":
     if not pathexists(ARGS.dir):
         mkdir(ARGS.dir)
 
+    # If a regex has been specified, compile the rule (once)
+    reRule = None
+    if ARGS.regex:
+        reRule = re.compile(ARGS.regex)
+
     while len(ITEMS) > 0 and not FINISHED:
         LAST = ''
         for ITEM in ITEMS:
+            result = None
+            if ARGS.regex:
+                result = re.match(reRule, ITEM['title'])
+
             if ITEM['score'] < ARGS.score:
                 print '\tSCORE: %s has score of %s which is lower than required score of %s.' % (ITEM['id'], ITEM['score'], ARGS.score)
                 nSkipped += 1
@@ -40,6 +51,10 @@ if __name__ == "__main__":
                 nSkipped += 1
             elif ARGS.nsfw and not ITEM['over_18']:
                 print '\tNot NSFW, skipping %s' % (ITEM['id'])
+                nSkipped += 1
+            elif ARGS.regex and not result:
+                # TODO: too noisy
+                # print '\tRegex match failed'
                 nSkipped += 1
             else:
                 FILENAME = pathjoin(ARGS.dir, '%s.jpg' % (ITEM['id']))
@@ -96,10 +111,11 @@ if __name__ == "__main__":
                         print '\tUpdate complete, exiting.'
                         FINISHED = True
                         break
+
             LAST = ITEM['id']
             nTotal += 1
-            if ARGS.num > 0 and nTotal >= ARGS.num:
-                print '\t%d images attempted , exiting.' % nTotal
+            if ARGS.num > 0 and nDownloaded >= ARGS.num:
+                print '\t%d images attempted, exiting.' % nTotal
                 FINISHED = True
                 break
         ITEMS = getitems(ARGS.reddit, LAST)
