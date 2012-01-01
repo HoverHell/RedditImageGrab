@@ -28,13 +28,13 @@ if __name__ == "__main__":
     if not pathexists(ARGS.dir):
         mkdir(ARGS.dir)
 
-    while len(ITEMS) > 0 and FINISHED == False:
+    while len(ITEMS) > 0 and not FINISHED:
         LAST = ''
         for ITEM in ITEMS:
             if ITEM['score'] < ARGS.score:
                 print '\tSCORE: %s has score of %s which is lower than required score of %s.' % (ITEM['id'], ITEM['score'], ARGS.score)
                 S += 1
-            elif ARGS.sfw == True and ITEM['over_18'] == True:
+            elif ARGS.sfw and ITEM['over_18']:
                 print '\tNSFW: %s is marked as NSFW.' % ITEM['id']
                 S += 1
             else:
@@ -88,7 +88,7 @@ if __name__ == "__main__":
                 else:
                     print '\tALREADY EXISTS: %s for %s already exists.' % (FILENAME, ITEM['url'])
                     E += 1
-                    if ARGS.update == True:
+                    if ARGS.update:
                         print '\tUpdate complete, exiting.'
                         FINISHED = True
                         break
