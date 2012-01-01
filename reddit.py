@@ -8,7 +8,7 @@ def getitems(subreddit, previd=''):
     """Return list of items from a subreddit."""
     url = 'http://www.reddit.com/r/%s.json' % subreddit
     # Get items after item with 'id' of previd.
-    if previd != '':
+    if previd:
         url = '%s?after=t3_%s' % (url, previd)
     try:
         json = urlopen(url).read()
