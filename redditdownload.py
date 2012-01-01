@@ -15,6 +15,7 @@ if __name__ == "__main__":
     PARSER.add_argument( '-score', metavar='s', default='0', type=int, required=False, help='Minimum score of images to download.')
     PARSER.add_argument( '-num', metavar='n', default='0', type=int, required=False, help='Number of images to process.')
     PARSER.add_argument( '-update', default=False, action='store_true', required=False, help='Run until you encounter a file already downloaded.')
+    PARSER.add_argument( '-sfw', default=False, action='store_true', required=False, help='Download safe for work images only.')
     ARGS = PARSER.parse_args()
  
     print 'Downloading images from "%s" subreddit' % (ARGS.reddit)
@@ -32,6 +33,9 @@ if __name__ == "__main__":
         for ITEM in ITEMS:
             if ITEM['score'] < ARGS.score:
                 print '\tSCORE: %s has score of %s which is lower than required score of %s.' % (ITEM['id'],ITEM['score'],ARGS.score) 
+                S += 1
+            elif ARGS.sfw == True and ITEM['over_18'] == True:
+                print '\tNSFW: %s is marked as NSFW.' % ITEM['id']
                 S += 1
             else:
                 FILENAME = pathjoin( ARGS.dir, '%s.jpg' % (ITEM['id'] ) )
