@@ -127,12 +127,12 @@ if __name__ == "__main__":
                     print '\tInvalid URL: %s!' % ITEM['url']
                     nFailed += 1
 
+            nTotal += 1
+            if ARGS.num > 0 and nDownloaded >= ARGS.num:
+                FINISHED = True
+                break
+
         LAST = ITEM['id']
 
-        nTotal += 1
-        if ARGS.num > 0 and nDownloaded >= ARGS.num:
-            print '\t%d images attempted, exiting.' % nTotal
-            FINISHED = True
-            break
 
     print 'Downloaded %d files (Processed %d, Skipped %d, Exists %d)' % (nDownloaded, nTotal, nSkipped, nErrors)
