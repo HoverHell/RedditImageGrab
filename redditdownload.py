@@ -66,13 +66,16 @@ if __name__ == "__main__":
 
             try:
                 if 'imgur.com' in ITEM['url']:
+                    if 'imgur.com/a/' in ITEM['url']:
+                        print '\tUnsupported imgur album [%s]. Skipping.' % (ITEM['url'])
+                        nSkipped += 1
+                        continue
+
                     # Change .png to .jpg for imgur urls.
                     if ITEM['url'].endswith('.png'):
                         ITEM['url'] = ITEM['url'].replace('.png', '.jpg')
                     # Add .jpg to imgur urls that are missing it.
                     elif '.jpg' not in ITEM['url']:
-                        ITEM['url'] = '%s.jpg' % ITEM['url']
-                    elif '.jpeg' not in ITEM['url']:
                         ITEM['url'] = '%s.jpg' % ITEM['url']
 
                 RESPONSE = urlopen(ITEM['url'])
@@ -102,7 +105,7 @@ if __name__ == "__main__":
 
                 # Don't download files multiple times!
                 if pathexists(FILENAME):
-                    print '\tALREADY EXISTS: %s for %s already exists.' % (FILENAME, ITEM['url'])
+                    print '\tURL [%s] already downloaded.' % (ITEM['url'])
                     nErrors += 1
                     if ARGS.update:
                         print '\tUpdate complete, exiting.'
