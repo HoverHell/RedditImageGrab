@@ -11,4 +11,4 @@ Advanced Examples:
 Retrieve last 10 pics in the 'wallpaper' subreddit with the word "sunset" in
 the title (note: case is ignored by (?i) predicate)
 
-    python redditdownload.py wallpaper sunsets --regex '(?i).*sunset.*' -num 10
+    python redditdownload.py wallpaper sunsets -regex '(?i).*sunset.*' -num 10
