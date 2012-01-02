@@ -55,7 +55,8 @@ if __name__ == "__main__":
                 nSkipped += 1
                 continue
             elif ARGS.nsfw and not ITEM['over_18']:
-                print '\tNot NSFW, skipping %s' % (ITEM['id'])
+                # TODO: too noisy!
+                # print '\tNot NSFW, skipping %s' % (ITEM['id'])
                 nSkipped += 1
                 continue
             elif ARGS.regex and not re.match(reRule, ITEM['title']):
