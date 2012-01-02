@@ -6,3 +6,9 @@ An example of running this script to download images with a score greater than 5
 And to run the same query but only get new images you don't already have, run the following:
     python redditdownload.py wallpaper wallpaper -score 50 -update
 
+Advanced Examples:
+
+Retrieve last 10 pics in the 'wallpaper' subreddit with the word "sunset" in
+the title (note: case is ignored by (?i) predicate)
+
+    python redditdownload.py wallpaper sunsets -regex '(?i).*sunset.*' -num 10
