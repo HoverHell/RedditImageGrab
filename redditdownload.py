@@ -23,7 +23,6 @@ if __name__ == "__main__":
 
     print 'Downloading images from "%s" subreddit' % (ARGS.reddit)
 
-    ITEMS = getitems(ARGS.reddit, ARGS.last)
     nTotal = nDownloaded = nErrors = nSkipped = nFailed = 0
     FINISHED = False
 
@@ -36,71 +35,73 @@ if __name__ == "__main__":
     if ARGS.regex:
         reRule = re.compile(ARGS.regex)
 
-    while len(ITEMS) > 0 and not FINISHED:
-        LAST = ''
+    LAST = ARGS.last
+
+    while not FINISHED:
+        ITEMS = getitems(ARGS.reddit, LAST)
+        if not ITEMS:
+            # No more items to process
+            break
+
         for ITEM in ITEMS:
             if ITEM['score'] < ARGS.score:
                 print '\tSCORE: %s has score of %s which is lower than required score of %s.' % (ITEM['id'], ITEM['score'], ARGS.score)
                 nSkipped += 1
+                continue
             elif ARGS.sfw and ITEM['over_18']:
                 print '\tNSFW: %s is marked as NSFW.' % ITEM['id']
                 nSkipped += 1
+                continue
             elif ARGS.nsfw and not ITEM['over_18']:
                 print '\tNot NSFW, skipping %s' % (ITEM['id'])
                 nSkipped += 1
-            elif ARGS.regex and re.match(reRule, ITEM['title']):
+                continue
+            elif ARGS.regex and not re.match(reRule, ITEM['title']):
                 # TODO: too noisy
                 # print '\tRegex match failed'
                 nSkipped += 1
-            else:
-                FILENAME = pathjoin(ARGS.dir, '%s.jpg' % (ITEM['id']))
-                # Don't download files multiple times!
-                if not pathexists(FILENAME):
-                    try:
-                        if 'imgur.com' in ITEM['url']:
-                            # Change .png to .jpg for imgur urls.
-                            if ITEM['url'].endswith('.png'):
-                                ITEM['url'] = ITEM['url'].replace('.png', '.jpg')
-                            # Add .jpg to imgur urls that are missing it.
-                            elif '.jpg' not in ITEM['url']:
-                                ITEM['url'] = '%s.jpg' % ITEM['url']
-                            elif '.jpeg' not in ITEM['url']:
-                                ITEM['url'] = '%s.jpg' % ITEM['url']
+                continue
 
-                        RESPONSE = urlopen(ITEM['url'])
-                        INFO = RESPONSE.info()
+            FILENAME = pathjoin(ARGS.dir, ITEM['id'])
 
-                        # Work out file type either from the response or the url.
-                        if 'content-type' in INFO.keys():
-                            FILETYPE = INFO['content-type']
-                        elif ITEM['url'].endswith('jpg'):
-                            FILETYPE = 'image/jpeg'
-                        elif ITEM['url'].endswith('jpeg'):
-                            FILETYPE = 'image/jpeg'
-                        else:
-                            FILETYPE = 'unknown'
+            try:
+                if 'imgur.com' in ITEM['url']:
+                    # Change .png to .jpg for imgur urls.
+                    if ITEM['url'].endswith('.png'):
+                        ITEM['url'] = ITEM['url'].replace('.png', '.jpg')
+                    # Add .jpg to imgur urls that are missing it.
+                    elif '.jpg' not in ITEM['url']:
+                        ITEM['url'] = '%s.jpg' % ITEM['url']
+                    elif '.jpeg' not in ITEM['url']:
+                        ITEM['url'] = '%s.jpg' % ITEM['url']
 
-                        # Only try to download jpeg images.
-                        if FILETYPE == 'image/jpeg':
-                            FILEDATA = RESPONSE.read()
-                            FILE = open(FILENAME, 'wb')
-                            FILE.write(FILEDATA)
-                            FILE.close()
-                            print '\tDownloaded %s to %s.' % (ITEM['url'], FILENAME)
-                            nDownloaded += 1
-                        else:
-                            print '\tWRONG FILE TYPE: %s has type: %s!' % (ITEM['url'], FILETYPE)
-                            nSkipped += 1
-                    except HTTPError as ERROR:
-                            print '\tHTTP ERROR: Code %s for %s.' % (ERROR.code, ITEM['url'])
-                            nFailed += 1
-                    except URLError as ERROR:
-                            print '\tURL ERROR: %s!' % ITEM['url']
-                            nFailed += 1
-                    except InvalidURL as ERROR:
-                            print '\tInvalid URL: %s!' % ITEM['url']
-                            nFailed += 1
+                RESPONSE = urlopen(ITEM['url'])
+                INFO = RESPONSE.info()
+
+                # Work out file type either from the response or the url.
+                if 'content-type' in INFO.keys():
+                    FILETYPE = INFO['content-type']
+                elif ITEM['url'].endswith('.jpg') or ITEM['url'].endswith('.jpeg'):
+                    FILETYPE = 'image/jpeg'
+                elif ITEM['url'].endswith('.png'):
+                    FILETYPE = 'image/png'
                 else:
+                    FILETYPE = 'unknown'
+
+                # Only try to download acceptable image types
+                if not FILETYPE in ['image/jpeg', 'image/png']:
+                    print '\tWRONG FILE TYPE: %s has type: %s!' % (ITEM['url'], FILETYPE)
+                    nSkipped += 1
+                    continue
+
+                # Set file extension based on content-type
+                if FILETYPE == 'image/jpeg':
+                    FILENAME += '.jpg'
+                elif FILETYPE == 'image/png':
+                    FILENAME += '.png'
+
+                # Don't download files multiple times!
+                if pathexists(FILENAME):
                     print '\tALREADY EXISTS: %s for %s already exists.' % (FILENAME, ITEM['url'])
                     nErrors += 1
                     if ARGS.update:
@@ -108,12 +109,29 @@ if __name__ == "__main__":
                         FINISHED = True
                         break
 
+                    continue
+
+                FILEDATA = RESPONSE.read()
+                FILE = open(FILENAME, 'wb')
+                FILE.write(FILEDATA)
+                FILE.close()
+                print '\tDownloaded %s to %s.' % (ITEM['url'], FILENAME)
+                nDownloaded += 1
+            except HTTPError as ERROR:
+                    print '\tHTTP ERROR: Code %s for %s.' % (ERROR.code, ITEM['url'])
+                    nFailed += 1
+            except URLError as ERROR:
+                    print '\tURL ERROR: %s!' % ITEM['url']
+                    nFailed += 1
+            except InvalidURL as ERROR:
+                    print '\tInvalid URL: %s!' % ITEM['url']
+                    nFailed += 1
+
             LAST = ITEM['id']
             nTotal += 1
             if ARGS.num > 0 and nDownloaded >= ARGS.num:
                 print '\t%d images attempted, exiting.' % nTotal
                 FINISHED = True
                 break
-        ITEMS = getitems(ARGS.reddit, LAST)
 
-    print 'Downloaded %d of %d (Skipped %d, Exists %d)' % (nDownloaded, nTotal, nSkipped, nErrors)
+    print 'Downloaded %d files (Processed %d, Skipped %d, Exists %d)' % (nDownloaded, nTotal, nSkipped, nErrors)
