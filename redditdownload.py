@@ -44,6 +44,8 @@ if __name__ == "__main__":
             break
 
         for ITEM in ITEMS:
+            nTotal += 1
+
             if ITEM['score'] < ARGS.score:
                 print '\tSCORE: %s has score of %s which is lower than required score of %s.' % (ITEM['id'], ITEM['score'], ARGS.score)
                 nSkipped += 1
@@ -130,12 +132,10 @@ if __name__ == "__main__":
                     print '\tInvalid URL: %s!' % ITEM['url']
                     nFailed += 1
 
-            nTotal += 1
             if ARGS.num > 0 and nDownloaded >= ARGS.num:
                 FINISHED = True
                 break
 
         LAST = ITEM['id']
-
 
     print 'Downloaded %d files (Processed %d, Skipped %d, Exists %d)' % (nDownloaded, nTotal, nSkipped, nErrors)
