@@ -9,16 +9,16 @@ from os import mkdir
 from reddit import getitems
 
 if __name__ == "__main__":
-    PARSER = ArgumentParser(description='Downloads files with specified externsion from the specified subreddit.')
-    PARSER.add_argument('reddit', metavar='r', help='Subreddit name.')
-    PARSER.add_argument('dir', metavar='d', help='Dir to put downloaded files in.')
+    PARSER = ArgumentParser(description='Downloads files with specified extension from the specified subreddit.')
+    PARSER.add_argument('reddit', metavar='<subreddit>', help='Subreddit name.')
+    PARSER.add_argument('dir', metavar='<destdir>', help='Dir to put downloaded files in.')
     PARSER.add_argument('-last', metavar='l', default='', required=False, help='ID of the last downloaded file.')
     PARSER.add_argument('-score', metavar='s', default='0', type=int, required=False, help='Minimum score of images to download.')
     PARSER.add_argument('-num', metavar='n', default='0', type=int, required=False, help='Number of images to download.')
     PARSER.add_argument('-update', default=False, action='store_true', required=False, help='Run until you encounter a file already downloaded.')
     PARSER.add_argument('-sfw', default=False, action='store_true', required=False, help='Download safe for work images only.')
     PARSER.add_argument('-nsfw', default=False, action='store_true', required=False, help='Download NSFW images only.')
-    PARSER.add_argument('-regex', action='store', default=None, required=False, help='Use regex to filter based on title.')
+    PARSER.add_argument('-regex', default=None, action='store', required=False, help='Use Python regex to filter based on title.')
     ARGS = PARSER.parse_args()
 
     print 'Downloading images from "%s" subreddit' % (ARGS.reddit)
