@@ -5,7 +5,7 @@ import StringIO
 from urllib2 import urlopen, HTTPError, URLError
 from httplib import InvalidURL
 from argparse import ArgumentParser
-from os.path import exists as pathexists, join as pathjoin, basename as pathbasename
+from os.path import exists as pathexists, join as pathjoin, basename as pathbasename, splitext as pathsplitext
 from os import mkdir
 from reddit import getitems
 
@@ -83,11 +83,13 @@ def _downloadFromUrl(url, destDir):
         FILETYPE = 'image/jpeg'
     elif url.endswith('.png'):
         FILETYPE = 'image/png'
+    elif url.endswith('.gif'):
+        FILETYPE = 'image/gif'
     else:
         FILETYPE = 'unknown'
 
     # Only try to download acceptable image types
-    if not FILETYPE in ['image/jpeg', 'image/png']:
+    if not FILETYPE in ['image/jpeg', 'image/png', 'image/gif']:
         raise WrongFileTypeException('WRONG FILE TYPE: %s has type: %s!' % (url, FILETYPE))
 
     FILENAME = pathjoin(ARGS.dir, pathbasename(url))
@@ -118,9 +120,12 @@ def _processImgurUrl(url):
     # Change .png to .jpg for imgur urls.
     if url.endswith('.png'):
         url = url.replace('.png', '.jpg')
-    # Add .jpg to imgur urls that are missing it.
-    elif '.jpg' not in url:
-        url = '%s.jpg' % url
+    else:
+        # Extract the file extension
+        basename, ext = pathsplitext(pathbasename(url))
+        if not ext:
+            # Append a default
+            url += '.jpg'
 
     return [url]
 
