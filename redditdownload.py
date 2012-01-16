@@ -55,12 +55,9 @@ def _extractImgurAlbumUrls(albumUrl):
     return urls
 
 
-def _downloadFromUrl(url, destDir):
+def _downloadFromUrl(url, destFile):
     """
-    Attempt to download file specified by url to 'destDir'
-
-    Returns:
-        Filename (derived from url and appended to 'destDir')
+    Attempt to download file specified by url to 'destFile'
 
     Raises:
         WrongFileTypeException
@@ -73,6 +70,10 @@ def _downloadFromUrl(url, destDir):
             If the filename (derived from the URL) already exists in
             the destination directory.
     """
+    # Don't download files multiple times!
+    if pathexists(destFile):
+        raise FileExistsException('URL [%s] already downloaded to %s.' % (url,destFile))
+
     RESPONSE = urlopen(url)
     INFO = RESPONSE.info()
 
@@ -92,18 +93,10 @@ def _downloadFromUrl(url, destDir):
     if not FILETYPE in ['image/jpeg', 'image/png', 'image/gif']:
         raise WrongFileTypeException('WRONG FILE TYPE: %s has type: %s!' % (url, FILETYPE))
 
-    FILENAME = pathjoin(ARGS.dir, pathbasename(url))
-
-    # Don't download files multiple times!
-    if pathexists(FILENAME):
-        raise FileExistsException('URL [%s] already downloaded.' % (url))
-
     FILEDATA = RESPONSE.read()
-    FILE = open(FILENAME, 'wb')
+    FILE = open(destFile, 'wb')
     FILE.write(FILEDATA)
     FILE.close()
-
-    return FILENAME
 
 
 def _processImgurUrl(url):
@@ -143,7 +136,7 @@ def _extractUrls(url):
 if __name__ == "__main__":
     PARSER = ArgumentParser(description='Downloads files with specified extension from the specified subreddit.')
     PARSER.add_argument('reddit', metavar='<subreddit>', help='Subreddit name.')
-    PARSER.add_argument('dir', metavar='<destdir>', help='Dir to put downloaded files in.')
+    PARSER.add_argument('dir', metavar='<destFile>', help='Dir to put downloaded files in.')
     PARSER.add_argument('-last', metavar='l', default='', required=False, help='ID of the last downloaded file.')
     PARSER.add_argument('-score', metavar='s', default=0, type=int, required=False, help='Minimum score of images to download.')
     PARSER.add_argument('-num', metavar='n', default=0, type=int, required=False, help='Number of images to download.')
@@ -204,13 +197,25 @@ if __name__ == "__main__":
                 nSkipped += 1
                 continue
 
-            for url in _extractUrls(ITEM['url']):
+            FILECOUNT = 0
+            URLS = _extractUrls(ITEM['url'])
+            for url in URLS:
                 try:
-                    FILENAME = _downloadFromUrl(url, ARGS.dir)
+                    FILEEXT = pathsplitext(url)[1]
+                    # Trim any http query off end of file extension.
+                    if '?' in FILEEXT:
+                        FILEEXT = FILEEXT[:FILEEXT.index('?')]
+                    # Only append numbers if more than one file.
+                    FILENUM = ('_%d' % FILECOUNT if len(URLS) > 1 else '')
+                    FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)
+                    FILEPATH = pathjoin(ARGS.dir, FILENAME) 
+                    # Download the image
+                    _downloadFromUrl(url, FILEPATH)
 
                     # Image downloaded successfully!
                     print '    Downloaded URL [%s].' % (url)
                     nDownloaded += 1
+                    FILECOUNT += 1
 
                     if ARGS.num > 0 and nDownloaded >= ARGS.num:
                         FINISHED = True
