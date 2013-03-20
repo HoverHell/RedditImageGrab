@@ -1,6 +1,6 @@
 """Return list of items from a sub-reddit of reddit.com."""
 
-from urllib2 import urlopen, HTTPError
+from urllib2 import urlopen, Request, HTTPError
 from json import JSONDecoder
 
 
@@ -8,10 +8,14 @@ def getitems(subreddit, previd=''):
     """Return list of items from a subreddit."""
     url = 'http://www.reddit.com/r/%s.json' % subreddit
     # Get items after item with 'id' of previd.
+    
+    hdr = { 'User-Agent' : 'RedditImageGrab script.' }
+    
     if previd:
         url = '%s?after=t3_%s' % (url, previd)
     try:
-        json = urlopen(url).read()
+        req = Request(url, headers=hdr)
+        json = urlopen(req).read()
         data = JSONDecoder().decode(json)
         items = [x['data'] for x in data['data']['children']]
     except HTTPError as ERROR:
