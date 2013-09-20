@@ -40,6 +40,11 @@ def cfg_requests():
 cfg_requests()
 
 
+class GetError(Exception):
+    """ Common exception-container for get_get errors. """
+    pass
+
+
 _requests_params = dict(timeout=20)  ## Also global-ish stuff
 def get_get(url, **kwa):
     ## TODO: user-agent, referer, cookies
@@ -47,7 +52,10 @@ def get_get(url, **kwa):
     _log.info("Getting: %r", url)
     params = dict(_requests_params)
     params.update(kwa)
-    return requests.get(url, **kwa)
+    try:
+        return requests.get(url, **kwa)
+    except Exception as e:
+        raise GetError("Error getting url %r" % (url,), e)
 def get(url, cache_file=None, req_params=None, bs=True, response=False, undecoded=False):
     ## TODO!: cache_dir  (for per-url cache files with expiration)  (e.g. urlhash-named files with a hash->url logfile)
     if undecoded:
@@ -96,9 +104,9 @@ def _preprocess(l, bs=None):
     return res
 def bs2im(some_bs):
     ## Sometimes more processing than needed but whatever.
-    return _preprocess((v.get('src') for v in some_bs.findAll('img')), bs=some_bs)
+    return list(_preprocess((v.get('src') for v in some_bs.findAll('img')), bs=some_bs))
 def bs2lnk(some_bs):
-    return _preprocess((v.get('href') for v in some_bs.findAll('a')), bs=some_bs)
+    return list(_preprocess((v.get('href') for v in some_bs.findAll('a')), bs=some_bs))
 
 
 url1 = "http://www.flickr.com/photos/tawnyarox/6913558128/lightbox/"
@@ -106,27 +114,44 @@ url2 = "http://cghub.com/images/view/574613/"
 url3 = "http://zenaly.deviantart.com/art/Chinese-City-380473959"
 
 
-def do_flickr_things(url):
-    html, bs = get(url, cache_file='tmpf.html', bs=True)
+def do_flickr_things(url, bs=None, html=None, recurse=True, fsize='o'):
+    if bs is None:
+        html, bs = get(url, cache_file='tmpf.html', bs=True)
     imgs = bs2im(bs)
     links = bs2lnk(bs)
     ## TODO!: Flickr sets; e.g. “http://www.flickr.com/photos/dougtanner/9786310375/in/set-72157635587262422/lightbox/”
     ## (link to “…/sets/…”, image-links to “…/in/set-…” there.
     #flickr_sizes = [v for v in links if re.v.endswith('siezes/')]
     flickr_sizes_base = [v for v in links if re.findall(r'/sizes/([a-z]/)?', v)]
-    flickr_sizes = [re.sub(r'/sizes/([a-z]/)?', '/sizes/o/', v) for v in flickr_sizes_base]
+    flickr_sizes = [re.sub(r'/sizes/([a-z]/)?', '/sizes/%s/' % (fsize,), v) for v in flickr_sizes_base]
     if not flickr_sizes:
         _log.log(19, "Failed to find flickr sizes link at %r", url)
         return
     sl = flickr_sizes[0]
-    sl_n = urlparse.urljoin(url, sl) + 'o/'
+    sl_n = urlparse.urljoin(url, sl)
     sl_html, sl_bs = get(sl_n, cache_file='tmpf2.html', bs=True)
     _pp = lambda l: [vv for vv in [urlparse.urljoin(url, v) for v in l] if vv.startswith('http')]
+    links3, imgs3 = bs2lnk(sl_bs), bs2im(sl_bs)
+    all3 = links3 + imgs3
     links2 = _pp(_preprocess(v.get('href') for v in sl_bs.findAll('a') if 'ownloa' in v.text))
     #imgs2 = _preprocess(v for v in bs2lnk(sl_bs) '_o.' in v)
-    imgs2 = _pp(_preprocess(vv for vv in bs2lnk(sl_bs) if re.match(r'.*_o\.[0-9A-Za-z]+$', vv)))
-    #return locals()
-    return links2 + imgs2
+    imgs2 = _pp(_preprocess(vv for vv in all3 if re.match(r'.*_%s\.[0-9A-Za-z]+$' % (fsize,), vv)))
+    if links2 or imgs2:
+        return True, (links2 + imgs2)
+    ## Not found - look for some other possible sizes.
+    sizes = 'o k h l c'.split()  # 'z m n s t q sq'
+    link3 = link3sv = None
+    for size in sizes:
+        surl = '/sizes/%s/' % (size,)
+        links3s = [v for v in links3 if surl in v]
+        if links3s:
+            link3 = links3s[0]
+            link3sv = size
+            break
+    if link3 and recurse:  # Try that size.
+        return do_flickr_things(link3, recurse=False, fsize=link3sv)
+    ## TODO: Try for links to other sizes in order
+    return False, imgs3
 def do_horrible_thing(url, base_url=None):
     data, resp = get(url, undecoded=True, response=True)
     mime = magic.from_buffer(data)
@@ -152,9 +177,12 @@ def do_horrible_things(url=url2, do_horrible_thing=do_horrible_thing, urls_to_sk
     ## ...
     if 'flickr.' in url:
         _log.debug("dhts: also trying flickr at %r", url)
-        flickr_stuff = do_flickr_things(url)
+        flickr_res, flickr_stuff = do_flickr_things(url, bs=bs, html=html)
         if flickr_stuff and isinstance(flickr_stuff, list):
-            to_check += flickr_stuff
+            if flickr_res:
+                to_check = flickr_stuff  ## Good enough, get just that
+            else:
+                to_check += flickr_stuff  ## Try too much things.
     ## ...
     to_check_baselen = len(to_check)
     if urls_to_skip:
@@ -164,7 +192,10 @@ def do_horrible_things(url=url2, do_horrible_thing=do_horrible_thing, urls_to_sk
     _log.debug("dhts: %r (of %r) urls to check", len(to_check), to_check_baselen)
     res = []
     for turl in to_check:
-        stuff = do_horrible_thing(turl, base_url=url)
+        try:
+            stuff = do_horrible_thing(turl, base_url=url)
+        except GetError:
+            continue  ## ... will be logged anyway.
         if stuff:
             data, resp = stuff[:2]
             res.append((turl, data, dict(resp=resp)))

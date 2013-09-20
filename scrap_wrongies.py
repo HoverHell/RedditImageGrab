@@ -32,6 +32,7 @@ import magic
 import pyaux
 
 import img_scrap_stuff
+from img_scrap_stuff import GetError
 
 
 _log = logging.getLogger(__name__)
@@ -49,7 +50,7 @@ def make_filename(url, imgdata, resp=None):
     datahash = _hash(imgdata)
     urlhash = _hash(url)
     urlv = url.rstrip('/').rsplit('/', 1)[1]
-    return '%s.%s' % (urlv, mime_ext)  # NOTE: cannot check for existing here.
+    return '%s%s' % (urlv, mime_ext)  # NOTE: cannot check for existing here.
 
 
 def unjsl_g(fn):
@@ -153,7 +154,11 @@ def do_scrap_wrongies(data_in=_WRONGDATA_LOGFILE,
         dmeta = dict(wrongie)  # debug-out data
         ## ...
         ## NOTE: long request-y process.
-        stuff = img_scrap_stuff.do_horrible_things(url, urls_to_skip=all_checked_urls)
+        try:
+            stuff = img_scrap_stuff.do_horrible_things(url, urls_to_skip=all_checked_urls)
+        except GetError as e:
+            log.error("Skipping wrongie %r", wrongie)
+            continue
         # stuff = ([checked_url, ...], [(image_url, image_data, {'resp': ..., ...}), ...])
         checked_urls, found_images = stuff
         all_checked_urls.update({u: 1 for u in checked_urls})
