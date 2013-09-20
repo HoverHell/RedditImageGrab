@@ -90,12 +90,17 @@ url2 = "http://cghub.com/images/view/574613/"
 url3 = "http://zenaly.deviantart.com/art/Chinese-City-380473959"
 
 
-def do_flickr_things(url=url1):
+def do_flickr_things(url):
     html, bs = get(url, cache_file='tmpf.html', bs=True)
     imgs = bs2im(bs)
     links = bs2lnk(bs)
-    flickr_sizes = [v for v in links if v.endswith('sizes/')]
+    ## TODO!: Flickr sets; e.g. “http://www.flickr.com/photos/dougtanner/9786310375/in/set-72157635587262422/lightbox/”
+    ## (link to “…/sets/…”, image-links to “…/in/set-…” there.
+    #flickr_sizes = [v for v in links if re.v.endswith('siezes/')]
+    flickr_sizes_base = [v for v in links if re.findall(r'/sizes/([a-z]/)?', v)]
+    flickr_sizes = [re.sub(r'/sizes/([a-z]/)?', '/sizes/o/', v) for v in flickr_sizes_base]
     if not flickr_sizes:
+        _log.log(19, "Failed to find flickr sizes link at %r", url)
         return
     sl = flickr_sizes[0]
     sl_n = urlparse.urljoin(url, sl) + 'o/'
@@ -135,11 +140,12 @@ def do_horrible_things(url=url2, do_horrible_thing=do_horrible_thing, urls_to_sk
         if flickr_stuff and isinstance(flickr_stuff, list):
             to_check += flickr_stuff
     ## ...
+    to_check_baselen = len(to_check)
     if urls_to_skip:
         to_check = [v for v in to_check if v not in urls_to_skip]
     ## Synopsis: check each url on the page for being a notably large image and download all such
     ## TODO?: grab all-all URLs (including plaintext)?
-    _log.debug("dhts: %r urls to check", len(to_check))
+    _log.debug("dhts: %r (of %r) urls to check", len(to_check), to_check_baselen)
     res = []
     for turl in to_check:
         stuff = do_horrible_thing(turl, base_url=url)

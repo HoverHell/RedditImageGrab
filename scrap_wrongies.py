@@ -163,7 +163,7 @@ def do_scrap_wrongies(data_in=_WRONGDATA_LOGFILE,
             if imgurl in meta_existing:
                 log.log(14, "Probably already saved: %r", imgurl)
                 #continue  ## Actually, whatever
-            log.log(12, "   ... %r", imguel)
+            log.log(12, "   ... %r", imgurl)
             ## NOTE: will be duplicated on each line.
             rmeta = dict(base=wrongie)  # dirmeta-out data
             resp = extras.get('resp')
