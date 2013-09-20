@@ -27,11 +27,27 @@ _log = logging.getLogger(__name__)
 _CACHE_GET = False
 _BS_PARSER = "html5lib"  # "lxml"  # "html5lib", "lxml", "xml", "html.parser"
 
-def get_get(url):
+
+def cfg_requests():
+    from requests.adapters import HTTPAdapter
+
+    s = requests.Session()
+    s.mount('http://', HTTPAdapter(max_retries=5))
+    s.mount('https://', HTTPAdapter(max_retries=5))
+
+
+## Note: does nasty global things
+cfg_requests()
+
+
+_requests_params = dict(timeout=20)  ## Also global-ish stuff
+def get_get(url, **kwa):
     ## TODO: user-agent, referer, cookies
     ## TODO: Timtout and retry options
     _log.info("Getting: %r", url)
-    return requests.get(url)
+    params = dict(_requests_params)
+    params.update(kwa)
+    return requests.get(url, **kwa)
 def get(url, cache_file=None, req_params=None, bs=True, response=False, undecoded=False):
     ## TODO!: cache_dir  (for per-url cache files with expiration)  (e.g. urlhash-named files with a hash->url logfile)
     if undecoded:
@@ -105,7 +121,7 @@ def do_flickr_things(url):
     sl = flickr_sizes[0]
     sl_n = urlparse.urljoin(url, sl) + 'o/'
     sl_html, sl_bs = get(sl_n, cache_file='tmpf2.html', bs=True)
-    _pp = lambda l: [urlparse.urljoin(url, v) for v in l if v.startswith('http')]
+    _pp = lambda l: [vv for vv in [urlparse.urljoin(url, v) for v in l] if vv.startswith('http')]
     links2 = _pp(_preprocess(v.get('href') for v in sl_bs.findAll('a') if 'ownloa' in v.text))
     #imgs2 = _preprocess(v for v in bs2lnk(sl_bs) '_o.' in v)
     imgs2 = _pp(_preprocess(vv for vv in bs2lnk(sl_bs) if re.match(r'.*_o\.[0-9A-Za-z]+$', vv)))
