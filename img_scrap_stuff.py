@@ -1,10 +1,12 @@
-# IPython log file
+#!/usr/bin/env python
+# coding: utf8
 
 ## Thoughts on imports ordering:
 ##   '\n\n'.join(builtin_libraries, external_libraries,
 ##   own_public_libraries, own_private_libraries, local_libraries,
 ##   same_package_modules)
 import os
+import sys
 import re
 import logging
 import urlparse
@@ -30,10 +32,11 @@ def get_get(url):
     ## TODO: Timtout and retry options
     _log.info("Getting: %r", url)
     return requests.get(url)
-def get(url, cache_file=None, req_params=None, bs=True, undecoded=False):
+def get(url, cache_file=None, req_params=None, bs=True, response=False, undecoded=False):
     ## TODO!: cache_dir  (for per-url cache files with expiration)  (e.g. urlhash-named files with a hash->url logfile)
     if undecoded:
         bs = False
+    resp = None
     if _CACHE_GET and cache_file is not None and os.path.isfile(cache_file):
         with open(cache_file) as f:
             data_bytes = f.read()
@@ -51,6 +54,8 @@ def get(url, cache_file=None, req_params=None, bs=True, undecoded=False):
             with open(cache_file, 'w') as f:
                 f.write(data_bytes)
     if not bs:
+        if response:
+            return data, resp
         return data
     ## ...
     ## NOTE: It appears that in at least one case BS might lose some
@@ -102,20 +107,20 @@ def do_flickr_things(url=url1):
     #return locals()
     return links2 + imgs2
 def do_horrible_thing(url, base_url=None):
-    resp = get(url, undecoded=True)
-    data = resp
+    data, resp = get(url, undecoded=True, response=True)
     mime = magic.from_buffer(data)
     try:
         img = Image.open(StringIO(data))  ## XXX/TODO: Use Image.frombytes or something
     except IOError as e:
-        _log.log(3, "Not an image file (%r): %r", mime, url)
+        _log.log(3, "dht: Not an image file (%r): %r", mime, url)
         return
     width, height = img.size
     if width < 800 or height < 600:
-        _log.log(3, "Image too small (%r, %r): %r", width, height, url)
+        _log.log(3, "dht: Image too small (%r, %r): %r", width, height, url)
         return
-    return data
-def do_horrible_things(url=url2, do_horrible_thing=do_horrible_thing):
+    _log.log(5, "dht: Image (%dx%d %db): %r", width, height, len(data), url)
+    return data, resp
+def do_horrible_things(url=url2, do_horrible_thing=do_horrible_thing, urls_to_skip=None):
     html, bs = get(url, cache_file='tmpf5_do_horrible_things.html', bs=True)
     ## Postprocess:
     # (urljoin should be done already though)
@@ -124,17 +129,24 @@ def do_horrible_things(url=url2, do_horrible_thing=do_horrible_thing):
     imgs, links = _pp(bs2im(bs)), _pp(bs2lnk(bs))
     to_check = imgs + links
     ## ...
-    if 'flickr' in url:
+    if 'flickr.' in url:
+        _log.debug("dhts: also trying flickr at %r", url)
         flickr_stuff = do_flickr_things(url)
         if flickr_stuff and isinstance(flickr_stuff, list):
             to_check += flickr_stuff
+    ## ...
+    if urls_to_skip:
+        to_check = [v for v in to_check if v not in urls_to_skip]
     ## Synopsis: check each url on the page for being a notably large image and download all such
     ## TODO?: grab all-all URLs (including plaintext)?
+    _log.debug("dhts: %r urls to check", len(to_check))
     res = []
     for turl in to_check:
         stuff = do_horrible_thing(turl, base_url=url)
         if stuff:
-            res.append((turl, stuff))
+            data, resp = stuff[:2]
+            res.append((turl, data, dict(resp=resp)))
+    _log.debug("dhts: %r images found", len(res))
     return to_check, res
 
 
@@ -142,5 +154,5 @@ if __name__ == '__main__':
     pyaux.runlib.init_logging(level=1)
     logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(21)
     pyaux.use_exc_ipdb()
-    res = do_horrible_things()
+    res = do_horrible_things(sys.argv[1])
     import IPython; IPython.embed(banner1="`res`.")

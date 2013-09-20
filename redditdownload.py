@@ -39,6 +39,16 @@ class DeviantHTMLParser(HTMLParser):
                     else:
                         return
 
+_WRONGDATA_LOGFILE = '.wrong_type_pages.jsl'
+def _log_wrongtype(_logfile=_WRONGDATA_LOGFILE, **kwa):
+    if not _logfile:
+        return
+    import json
+    data = json.dumps(kwa) + "\n"
+    with open(_logfile, 'a', 1) as f:
+        f.write(data)
+
+
 class WrongFileTypeException(Exception):
     """Exception raised when incorrect content-type discovered"""
 
@@ -294,6 +304,9 @@ if __name__ == "__main__":
                         break
                 except WrongFileTypeException as ERROR:
                     print '    %s' % (ERROR)
+                    _log_wrongtype(url=URL, target_dir=ARGS.dir,
+                       _filecount=FILECOUNT, _downloaded=DOWNLOADED,
+                       _filename=FILENAME)
                     SKIPPED += 1
                 except FileExistsException as ERROR:
                     print '    %s' % (ERROR)
