@@ -56,7 +56,7 @@ def get_get(url, **kwa):
         return requests.get(url, **kwa)
     except Exception as e:
         raise GetError("Error getting url %r" % (url,), e)
-def get(url, cache_file=None, req_params=None, bs=True, response=False, undecoded=False):
+def get(url, cache_file=None, req_params=None, bs=True, response=False, undecoded=False, _max_len=30*(2**20)):
     ## TODO!: cache_dir  (for per-url cache files with expiration)  (e.g. urlhash-named files with a hash->url logfile)
     if undecoded:
         bs = False
@@ -66,10 +66,16 @@ def get(url, cache_file=None, req_params=None, bs=True, response=False, undecode
             data_bytes = f.read()
             data = data_bytes if undecoded else data_bytes.decode('utf-8')
     else:
-        resp = get_get(url, **(req_params or {}))
+        resp = get_get(url, stream=True, **(req_params or {}))
         #if resp.status_code != 200: ...
         if undecoded:
-            data = ''.join(resp.iter_content())  #, stream=True  ## XXX: Size limit?
+            data = bytearray()
+            for chunk in resp.iter_content(chunk_size=16384):
+                data += chunk
+                if len(data) > _max_len:
+                    print "Too large"
+                    break
+            data = bytes(data)  ## Have to, alas.
             data_bytes = data
         else:
             data = resp.text
@@ -77,7 +83,7 @@ def get(url, cache_file=None, req_params=None, bs=True, response=False, undecode
         if cache_file is not None:
             with open(cache_file, 'w') as f:
                 f.write(data_bytes)
-    if not bs:
+    if not bs:  ## ... should've done a dict.
         if response:
             return data, resp
         return data
@@ -87,6 +93,8 @@ def get(url, cache_file=None, req_params=None, bs=True, response=False, undecode
     ##   parser but html5lib.
     bs = bs4.BeautifulSoup(data, _BS_PARSER)
     bs._source_url = url
+    if response:
+        return data, bs, resp
     return data, bs
 def _filter(l):
     return filter(None, l)  #[v for v in l if v]
@@ -126,10 +134,10 @@ def do_flickr_things(url, bs=None, html=None, recurse=True, fsize='o'):
     flickr_sizes = [re.sub(r'/sizes/([a-z]/)?', '/sizes/%s/' % (fsize,), v) for v in flickr_sizes_base]
     if not flickr_sizes:
         _log.log(19, "Failed to find flickr sizes link at %r", url)
-        return
+        return False, None
     sl = flickr_sizes[0]
     sl_n = urlparse.urljoin(url, sl)
-    sl_html, sl_bs = get(sl_n, cache_file='tmpf2.html', bs=True)
+    sl_html, sl_bs, sl_resp = get(sl_n, cache_file='tmpf2.html', bs=True, response=True)[:3]
     _pp = lambda l: [vv for vv in [urlparse.urljoin(url, v) for v in l] if vv.startswith('http')]
     links3, imgs3 = bs2lnk(sl_bs), bs2im(sl_bs)
     all3 = links3 + imgs3
@@ -139,6 +147,8 @@ def do_flickr_things(url, bs=None, html=None, recurse=True, fsize='o'):
     if links2 or imgs2:
         return True, (links2 + imgs2)
     ## Not found - look for some other possible sizes.
+    if sl_resp is not None:
+        links3 += [sl_resp.url]  # for redirects
     sizes = 'o k h l c'.split()  # 'z m n s t q sq'
     link3 = link3sv = None
     for size in sizes:
