@@ -1,5 +1,7 @@
+#!/usr/bin/env python
 """Return list of items from a sub-reddit of reddit.com."""
 
+import sys
 from urllib2 import urlopen, Request, HTTPError
 from json import JSONDecoder
 
@@ -19,8 +21,13 @@ def getitems(subreddit, previd=''):
         data = JSONDecoder().decode(json)
         items = [x['data'] for x in data['data']['children']]
     except HTTPError as ERROR:
-        print '\tHTTP ERROR: Code %s for %s.' % (ERROR.code, url)
-        items = []
+        error_message = '\tHTTP ERROR: Code %s for %s.' % (ERROR.code, url)
+        sys.exit(error_message)
+    except ValueError as ERROR:
+        if ERROR.args[0] == 'No JSON object could be decoded':
+            error_message = 'ERROR: subreddit "%s" does not exist' % (subreddit)
+            sys.exit(error_message)
+        raise ERROR
     return items
 
 if __name__ == "__main__":
