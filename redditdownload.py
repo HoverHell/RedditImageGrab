@@ -8,7 +8,20 @@ from argparse import ArgumentParser
 from os.path import exists as pathexists, join as pathjoin, basename as pathbasename, splitext as pathsplitext
 from os import mkdir
 from reddit import getitems
+from HTMLParser import HTMLParser
 
+class DeviantHTMLParser(HTMLParser):
+    def __init__(self):
+        self.reset()
+        self.IMAGE = None
+    def handle_starttag(self, tag, attrs):
+        if tag == "img" or self.IMAGE != None:
+            for attr in attrs:
+                if attr[0] == "class" and attr[1] == "dev-content-normal":
+                    for newAttr in attrs:
+                        if newAttr[0] == "src":
+                            self.IMAGE = newAttr[1]
+                            return
 
 class WrongFileTypeException(Exception):
     """Exception raised when incorrect content-type discovered"""
@@ -122,6 +135,16 @@ def process_imgur_url(url):
 
     return [url]
 
+def  process_deviant_url(url):
+    if url.endswith('.jpg'):
+        return [url]
+    else:
+        response = urlopen(url)
+        filedata = response.read()
+        parser = DeviantHTMLParser()
+        parser.feed(filedata)
+        return [parser.IMAGE]
+    return []
 
 def extract_urls(url):
     """
@@ -135,6 +158,8 @@ def extract_urls(url):
 
     if 'imgur.com' in url:
         urls = process_imgur_url(url)
+    elif 'deviantart.com' in url:
+        urls = process_deviant_url(url)
     else:
         urls = [url]
 
@@ -216,7 +241,7 @@ if __name__ == "__main__":
                     # Only append numbers if more than one file.
                     FILENUM = ('_%d' % FILECOUNT if len(URLS) > 1 else '')
                     FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)
-                    FILEPATH = pathjoin(ARGS.dir, FILENAME) 
+                    FILEPATH = pathjoin(ARGS.dir, FILENAME)
 
                     # Download the image
                     download_from_url(URL, FILEPATH)
