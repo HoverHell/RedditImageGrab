@@ -10,18 +10,45 @@ from os import mkdir
 from reddit import getitems
 from HTMLParser import HTMLParser
 
+# Used to extract src from Deviantart URLs
 class DeviantHTMLParser(HTMLParser):
+    """
+    Parses the DeviantArt Web page in search for a link to the main image on page
+
+    Attributes:
+        IMAGE  - Direct link to higher quality image
+        BACKUP - Direct link to lesser quality image
+    """
     def __init__(self):
         self.reset()
         self.IMAGE = None
+        self.BACKUP = None
+    # Handles HTML Elements eg <img src="//blank.jpg" class="picture"/> ->
+    #      tag => "img", attrs => [("src", "//blank.jpg"), ("class", "picture")]
     def handle_starttag(self, tag, attrs):
-        if tag == "img" or self.IMAGE != None:
-            for attr in attrs:
-                if attr[0] == "class" and attr[1] == "dev-content-normal":
-                    for newAttr in attrs:
-                        if newAttr[0] == "src":
-                            self.IMAGE = newAttr[1]
-                            return
+        # Only interested in img when we dont have the url
+        if (tag == "a" or tag == "img") and self.IMAGE == None:
+            # Check attributes for class
+            for classAttr in attrs:
+                # Check class is dev-content-normal
+                if classAttr[0] == "class":
+                    # Better Quality Image
+                    if "dev-page-download" in classAttr[1]:
+                        for hrefAttr in attrs:
+                            if hrefAttr[0] == "href":
+                                self.IMAGE = hrefAttr[1]
+                                # Stops processing HTML as we have found
+                                #    best quality image
+                                return
+                    # Incase page doesnt have a download button
+                    elif classAttr[1] == "dev-content-normal":
+                        for srcAttr in attrs:
+                            if srcAttr[0] == "src":
+                                self.BACKUP = srcAttr[1]
+                                return
+                    # This is not the Element you are looking for
+                    else:
+                        return
 
 class WrongFileTypeException(Exception):
     """Exception raised when incorrect content-type discovered"""
@@ -136,15 +163,31 @@ def process_imgur_url(url):
     return [url]
 
 def  process_deviant_url(url):
+    """
+    Given a DeviantArt URL, determine if it's a direct link to an image, or
+    a standard DeviantArt Page. If the latter, attempt to acquire Direct link.
+
+    Returns:
+        deviantart image url
+    """
+    # We have it! Dont worry
     if url.endswith('.jpg'):
         return [url]
     else:
+        # Get Page and parse for image link
         response = urlopen(url)
         filedata = response.read()
         parser = DeviantHTMLParser()
-        parser.feed(filedata)
-        return [parser.IMAGE]
-    return []
+        try:
+            parser.feed(filedata)
+            if parser.IMAGE != None:
+                return [parser.IMAGE]
+            return [parser.BACKUP]
+        # Exceptions thrown when non-ascii chars are found
+        except UnicodeDecodeError as ERROR:
+            print ERROR
+    # Dont return None!
+    return [url]
 
 def extract_urls(url):
     """
