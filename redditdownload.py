@@ -16,13 +16,11 @@ class DeviantHTMLParser(HTMLParser):
     Parses the DeviantArt Web page in search for a link to the main image on page
 
     Attributes:
-        IMAGE  - Direct link to higher quality image
-        BACKUP - Direct link to lesser quality image
+        IMAGE  - Direct link to image
     """
     def __init__(self):
         self.reset()
         self.IMAGE = None
-        self.BACKUP = None
     # Handles HTML Elements eg <img src="//blank.jpg" class="picture"/> ->
     #      tag => "img", attrs => [("src", "//blank.jpg"), ("class", "picture")]
     def handle_starttag(self, tag, attrs):
@@ -32,21 +30,11 @@ class DeviantHTMLParser(HTMLParser):
             for classAttr in attrs:
                 # Check class is dev-content-normal
                 if classAttr[0] == "class":
-                    # Better Quality Image
-                    if "dev-page-download" in classAttr[1]:
-                        for hrefAttr in attrs:
-                            if hrefAttr[0] == "href":
-                                self.IMAGE = hrefAttr[1]
-                                # Stops processing HTML as we have found
-                                #    best quality image
-                                return
                     # Incase page doesnt have a download button
-                    elif classAttr[1] == "dev-content-normal":
+                    if classAttr[1] == "dev-content-normal":
                         for srcAttr in attrs:
                             if srcAttr[0] == "src":
-                                self.BACKUP = srcAttr[1]
-                                return
-                    # This is not the Element you are looking for
+                                self.IMAGE = srcAttr[1]
                     else:
                         return
 
@@ -182,10 +170,13 @@ def  process_deviant_url(url):
             parser.feed(filedata)
             if parser.IMAGE != None:
                 return [parser.IMAGE]
-            return [parser.BACKUP]
+            return [url]
         # Exceptions thrown when non-ascii chars are found
         except UnicodeDecodeError as ERROR:
-            print ERROR
+            if parser.IMAGE != None:
+                return [parser.IMAGE]
+            else:
+                return[url]
     # Dont return None!
     return [url]
 
