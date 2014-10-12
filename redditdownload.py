@@ -8,7 +8,35 @@ from argparse import ArgumentParser
 from os.path import exists as pathexists, join as pathjoin, basename as pathbasename, splitext as pathsplitext
 from os import mkdir
 from reddit import getitems
+from HTMLParser import HTMLParser
 
+# Used to extract src from Deviantart URLs
+class DeviantHTMLParser(HTMLParser):
+    """
+    Parses the DeviantArt Web page in search for a link to the main image on page
+
+    Attributes:
+        IMAGE  - Direct link to image
+    """
+    def __init__(self):
+        self.reset()
+        self.IMAGE = None
+    # Handles HTML Elements eg <img src="//blank.jpg" class="picture"/> ->
+    #      tag => "img", attrs => [("src", "//blank.jpg"), ("class", "picture")]
+    def handle_starttag(self, tag, attrs):
+        # Only interested in img when we dont have the url
+        if (tag == "a" or tag == "img") and self.IMAGE == None:
+            # Check attributes for class
+            for classAttr in attrs:
+                # Check class is dev-content-normal
+                if classAttr[0] == "class":
+                    # Incase page doesnt have a download button
+                    if classAttr[1] == "dev-content-normal":
+                        for srcAttr in attrs:
+                            if srcAttr[0] == "src":
+                                self.IMAGE = srcAttr[1]
+                    else:
+                        return
 
 class WrongFileTypeException(Exception):
     """Exception raised when incorrect content-type discovered"""
@@ -122,6 +150,35 @@ def process_imgur_url(url):
 
     return [url]
 
+def  process_deviant_url(url):
+    """
+    Given a DeviantArt URL, determine if it's a direct link to an image, or
+    a standard DeviantArt Page. If the latter, attempt to acquire Direct link.
+
+    Returns:
+        deviantart image url
+    """
+    # We have it! Dont worry
+    if url.endswith('.jpg'):
+        return [url]
+    else:
+        # Get Page and parse for image link
+        response = urlopen(url)
+        filedata = response.read()
+        parser = DeviantHTMLParser()
+        try:
+            parser.feed(filedata)
+            if parser.IMAGE != None:
+                return [parser.IMAGE]
+            return [url]
+        # Exceptions thrown when non-ascii chars are found
+        except UnicodeDecodeError as ERROR:
+            if parser.IMAGE != None:
+                return [parser.IMAGE]
+            else:
+                return[url]
+    # Dont return None!
+    return [url]
 
 def extract_urls(url):
     """
@@ -135,6 +192,8 @@ def extract_urls(url):
 
     if 'imgur.com' in url:
         urls = process_imgur_url(url)
+    elif 'deviantart.com' in url:
+        urls = process_deviant_url(url)
     else:
         urls = [url]
 
@@ -216,7 +275,7 @@ if __name__ == "__main__":
                     # Only append numbers if more than one file.
                     FILENUM = ('_%d' % FILECOUNT if len(URLS) > 1 else '')
                     FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)
-                    FILEPATH = pathjoin(ARGS.dir, FILENAME) 
+                    FILEPATH = pathjoin(ARGS.dir, FILENAME)
 
                     # Download the image
                     download_from_url(URL, FILEPATH)
