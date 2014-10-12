@@ -276,12 +276,15 @@ if __name__ == "__main__":
                     FILENUM = ('_%d' % FILECOUNT if len(URLS) > 1 else '')
                     FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)
                     FILEPATH = pathjoin(ARGS.dir, FILENAME)
+                    
+                    # Improve debuggability list URL before download too.
+                    print '    Attempting to download URL [%s] as [%s].' % (URL.encode('utf-8'), FILENAME.encode('utf-8'))
 
                     # Download the image
                     download_from_url(URL, FILEPATH)
 
                     # Image downloaded successfully!
-                    print '    Downloaded URL [%s] as [%s].' % (URL, FILENAME)
+                    print '    Sucessfully downloaded URL [%s] as [%s].' % (URL, FILENAME)
                     DOWNLOADED += 1
                     FILECOUNT += 1
 
