@@ -1,4 +1,4 @@
-# RedditImageGrap
+# RedditImageGrab
 
 I created this script to download the latest (and greatest) wallpapers
 off of image subreddits like wallpaper to keep my desktop wallpaper
