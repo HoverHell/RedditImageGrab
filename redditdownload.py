@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 """Download images from a reddit.com subreddit."""
 
 import re
