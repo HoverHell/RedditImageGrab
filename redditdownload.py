@@ -240,6 +240,9 @@ if __name__ == "__main__":
         for ITEM in ITEMS:
             TOTAL += 1
             
+            if 'reddit.com/r/' + ARGS.reddit + '/comments/' in ITEM['url']:
+                continue
+            
             if ITEM['score'] < ARGS.score:
                 if ARGS.verbose:
                     print '    SCORE: %s has score of %s which is lower than required score of %s.' % (ITEM['id'], ITEM['score'], ARGS.score)
