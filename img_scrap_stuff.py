@@ -10,6 +10,7 @@ import sys
 import re
 import logging
 import urlparse
+import traceback
 
 from PIL import Image
 from cStringIO import StringIO
@@ -46,7 +47,7 @@ class GetError(Exception):
 
 
 _requests_params = dict(timeout=20)  ## Also global-ish stuff
-def get_get(url, **kwa):
+def get_get_get(url, **kwa):
     ## TODO: user-agent, referer, cookies
     ## TODO: Timtout and retry options
     _log.info("Getting: %r", url)
@@ -56,6 +57,16 @@ def get_get(url, **kwa):
         return requests.get(url, **kwa)
     except Exception as e:
         raise GetError("Error getting url %r" % (url,), e)
+def get_get(*ar, **kwa):
+    retries = kwa.pop('_xretries', 5)
+    for retry in xrange(retries):
+        try:
+            return get_get_get(*ar, **kwa)
+        except Exception as e:
+            traceback.print_exc()
+            ee = e
+            print "On retry #%r" % (retry,)
+    raise GetError(ee)
 def get(url, cache_file=None, req_params=None, bs=True, response=False, undecoded=False, _max_len=30*(2**20)):
     ## TODO!: cache_dir  (for per-url cache files with expiration)  (e.g. urlhash-named files with a hash->url logfile)
     if undecoded:
