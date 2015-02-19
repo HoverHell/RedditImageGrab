@@ -29,8 +29,6 @@ import hashlib
 from atomicfile import AtomicFile
 import magic
 
-import pyaux
-
 import img_scrap_stuff
 from img_scrap_stuff import GetError
 
@@ -200,9 +198,13 @@ def do_scrap_wrongies(data_in=_WRONGDATA_LOGFILE,
 
 
 def main():
-    pyaux.runlib.init_logging(level=1)
+    try:
+        import pyaux.runlib
+        pyaux.runlib.init_logging(level=1)
+        pyaux.use_exc_ipdb()
+    except Exception:
+        pass
     logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(21)
-    pyaux.use_exc_ipdb()
     res = do_scrap_wrongies()
     return
 
