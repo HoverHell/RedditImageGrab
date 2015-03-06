@@ -29,6 +29,9 @@ _CACHE_GET = False
 _BS_PARSER = "html5lib"  # "lxml"  # "html5lib", "lxml", "xml", "html.parser"
 
 
+MiB = 2 ** 20
+
+
 def cfg_requests():
     from requests.adapters import HTTPAdapter
 
@@ -46,7 +49,9 @@ class GetError(Exception):
     pass
 
 
-_requests_params = dict(timeout=20)  ## Also global-ish stuff
+_requests_params = dict(timeout=20, verify=False)  ## Also global-ish stuff
+
+
 def get_get_get(url, **kwa):
     ## TODO: user-agent, referer, cookies
     ## TODO: Timtout and retry options
@@ -54,9 +59,11 @@ def get_get_get(url, **kwa):
     params = dict(_requests_params)
     params.update(kwa)
     try:
-        return requests.get(url, **kwa)
+        return requests.get(url, **params)
     except Exception as e:
         raise GetError("Error getting url %r" % (url,), e)
+
+
 def get_get(*ar, **kwa):
     retries = kwa.pop('_xretries', 5)
     for retry in xrange(retries):
@@ -67,7 +74,11 @@ def get_get(*ar, **kwa):
             ee = e
             print "On retry #%r" % (retry,)
     raise GetError(ee)
-def get(url, cache_file=None, req_params=None, bs=True, response=False, undecoded=False, _max_len=30*(2**20)):
+
+
+def get(
+        url, cache_file=None, req_params=None, bs=True, response=False, undecoded=False,
+        _max_len=30 * MiB):
     ## TODO!: cache_dir  (for per-url cache files with expiration)  (e.g. urlhash-named files with a hash->url logfile)
     if undecoded:
         bs = False
@@ -107,23 +118,35 @@ def get(url, cache_file=None, req_params=None, bs=True, response=False, undecode
     if response:
         return data, bs, resp
     return data, bs
+
+
 def _filter(l):
     return filter(None, l)  #[v for v in l if v]
+
+
 def _url_abs(l, base_url):
     return (urlparse.urljoin(base_url, v) for v in l)
+
+
 def _preprocess_bs_links(bs, links):
     try:
         base_url = bs._source_url
     except AttributeError:
         return links
     return _url_abs(links, base_url)
+
+
 def _preprocess(l, bs=None):
     res = sorted(set(_filter(l)))
     res = _preprocess_bs_links(bs, res) if bs is not None else res
     return res
+
+
 def bs2im(some_bs):
     ## Sometimes more processing than needed but whatever.
     return list(_preprocess((v.get('src') for v in some_bs.findAll('img')), bs=some_bs))
+
+
 def bs2lnk(some_bs):
     return list(_preprocess((v.get('href') for v in some_bs.findAll('a')), bs=some_bs))
 
@@ -134,6 +157,10 @@ url3 = "http://zenaly.deviantart.com/art/Chinese-City-380473959"
 
 
 def do_flickr_things(url, bs=None, html=None, recurse=True, fsize='o'):
+    """ ...
+
+    returns (is_complete_success, [candidate_link, ...])
+    """
     if bs is None:
         html, bs = get(url, cache_file='tmpf.html', bs=True)
     imgs = bs2im(bs)
@@ -173,6 +200,8 @@ def do_flickr_things(url, bs=None, html=None, recurse=True, fsize='o'):
         return do_flickr_things(link3, recurse=False, fsize=link3sv)
     ## TODO: Try for links to other sizes in order
     return False, imgs3
+
+
 def do_horrible_thing(url, base_url=None):
     data, resp = get(url, undecoded=True, response=True)
     mime = magic.from_buffer(data)
@@ -187,6 +216,8 @@ def do_horrible_thing(url, base_url=None):
         return
     _log.log(5, "dht: Image (%dx%d %db): %r", width, height, len(data), url)
     return data, resp
+
+
 def do_horrible_things(url=url2, do_horrible_thing=do_horrible_thing, urls_to_skip=None):
     html, bs = get(url, cache_file='tmpf5_do_horrible_things.html', bs=True)
     ## Postprocess:
@@ -230,3 +261,4 @@ if __name__ == '__main__':
     pyaux.use_exc_ipdb()
     res = do_horrible_things(sys.argv[1])
     import IPython; IPython.embed(banner1="`res`.")
+
