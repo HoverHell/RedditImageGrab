@@ -56,7 +56,7 @@ def get_all_objects(text):
     # Helper functions
 
     def indexall(topstr, substr):
-        return [m.start() for m in re.finditer(re.escape(substr), topstr)]
+        return (m.start() for m in re.finditer(re.escape(substr), topstr))
 
     def try_yaml_load(some_str, **kwa):
         try:
@@ -65,12 +65,13 @@ def get_all_objects(text):
             return
 
     # Permutate them all
-    results = [try_yaml_load(text[from_:to_ + 1])
+    results = (try_yaml_load(text[from_:to_ + 1])
                for from_ in indexall(text, '{')
-               for to_ in indexall(text, '}')]
+               for to_ in indexall(text, '}'))
     # Drop the failures
-    results = [val for val in results if val is not None]
-    assert all(isinstance(val, dict) for val in results)
+    results = (val for val in results if val is not None)
+    # assert all(isinstance(val, dict) for val in results)
+    # NOTE: returns a generator
     return results
 
 
@@ -256,11 +257,15 @@ def do_flickr_things(url, bs=None, html=None, maybe_album=True, **kwa):
         # TODO?: exception handling? Probably don't want (yet) though.
         results = [do_flickr_things(page_url, maybe_album=False, **kwa)
                    for page_url in page_urls]
+
+        result_links = [
+            res_link
+            for _, page_res_links in results
+            for res_link in page_res_links]
+        result_links = sorted(set(result_links))
         result = (
             all(page_res for page_res, _ in results),
-            [res_link
-             for _, page_res_links in results
-             for res_link in page_res_links])
+            result_links)
         return result
 
     # Otherwise just recursed or just don't want an album
@@ -273,11 +278,13 @@ def do_flickr_things(url, bs=None, html=None, maybe_album=True, **kwa):
 
     # Links by extension
     img_ext_links = [lnk for lnk in page_links if re.search(img_ext_re, lnk)]
+    img_ext_links = sorted(set(img_ext_links))
 
     links_for_sizes = []
     for size in flickr_sizes:
         size_url_re = r'_%s\.[a-zA-Z0-9]{1,7}$' % (size,)
         size_links = [lnk for lnk in page_links if re.search(size_url_re, lnk)]
+        size_links = sorted(set(size_links))
         if size_links:
             links_for_sizes.append((size, size_links))  # Save all for debug
 
