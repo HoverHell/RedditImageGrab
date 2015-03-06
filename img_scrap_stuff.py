@@ -41,6 +41,22 @@ MiB = 2 ** 20
 _common_reqr = None
 
 
+def indexall(topstr, substr):
+    return (m.start() for m in re.finditer(re.escape(substr), topstr))
+
+
+def indexall_re(topstr, substr_re):
+    return (m.start() for m in re.finditer(substr_re, topstr))
+
+
+def try_yaml_load(some_str, **kwa):
+    import yaml
+    try:
+        return yaml.safe_load(some_str, **kwa)
+    except Exception:
+        return
+
+
 def get_all_objects(text):
     """ Zealous obtainer of mappings from a text, e.g. in javascript
     or JSON or whatever. Anything between '{' and '}'
@@ -54,15 +70,6 @@ def get_all_objects(text):
     [{'a': [{'v': 12}]}, {'v': 12}]
     """
     # Helper functions
-
-    def indexall(topstr, substr):
-        return (m.start() for m in re.finditer(re.escape(substr), topstr))
-
-    def try_yaml_load(some_str, **kwa):
-        try:
-            return yaml.safe_load(some_str, **kwa)
-        except Exception:
-            return
 
     # Permutate them all
     results = (try_yaml_load(text[from_:to_ + 1])
