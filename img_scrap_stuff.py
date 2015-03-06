@@ -72,16 +72,71 @@ def try_yaml_load(some_str, **kwa):
         return
 
 
-def get_all_objects(text, beginning=r'{'):
+def get_all_objects(text, beginning=r'{', debug=False):
     """ Zealous obtainer of mappings from a text, e.g. in javascript
     or JSON or whatever. Anything between '{' and '}'
 
-    Not performant. Requires pyyaml.
+    The monstrous advanced version.
+
+    Not performant.
+
+    Requires pyyaml.
 
     >>> st = 'a str with var stuff = {a: [{"v": 12}]} and such'
     >>> next(get_all_objects(st))
     {'a': [{'v': 12}]}
     """
+
+    def _dbg_actual(st, *ar):
+        print "D: ", st % ar
+
+    _dbg = _dbg_actual if debug else (lambda *ar: None)
+
+    import yaml
+
+    # Allow any escape to be treated as the character itself.
+    class ddd(dict):
+        def __getitem__(self, key):
+            try:
+                return dict.__getitem__(self, key)
+            except KeyError:
+                self.__setitem__(key, key)
+                return key
+
+    class TheLoader(yaml.SafeLoader):
+        ESCAPE_REPLACEMENTS = ddd(yaml.SafeLoader.ESCAPE_REPLACEMENTS)
+
+    from cStringIO import StringIO
+    # optimised slicing
+    if isinstance(text, unicode):
+        _dbg("encoding")
+        text = text.encode('utf-8')
+    _dbg("Length: %r", len(text))
+    beginnings = list(indexall_re(text, beginning))
+    _dbg("Beginnings amount: %r", len(beginnings))
+    _dbg("Beginnings list: %r", beginnings[:15] + (beginnings[15:] and ['...']))
+    text = StringIO(text)
+    for from_ in beginnings:
+        current_pos = text.tell()
+        _dbg("At %r", current_pos)
+#         if from_ < current_pos:
+#             _dbg("Skipping the beginning %r" % (from_,))
+#             # NOTE: this will skip the recursed structures.
+#             # Which is quite helpful.
+#             continue
+        text.seek(from_)
+        loader = TheLoader(text)
+        try:
+            art_res = loader.get_data()
+        except Exception as exc:
+            _dbg("Nope: %r / %s / %r", exc, exc, exc.args)
+            text.seek(from_)
+            _dbg("Stuff was: %r", repr(text.read(50)).decode('string-escape'))
+            continue
+        assert isinstance(part_res, dict)
+        yield part_res
+
+def get_all_objects(text, beginning=r'{'):
     import yaml
     # TODO?: somehow optimise the slicing?
     for from_ in indexall_re(text, beginning):
