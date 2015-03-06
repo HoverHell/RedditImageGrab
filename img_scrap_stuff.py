@@ -41,6 +41,39 @@ MiB = 2 ** 20
 _common_reqr = None
 
 
+def get_all_objects(text):
+    """ Zealous obtainer of mappings from a text, e.g. in javascript
+    or JSON or whatever. Anything between '{' and '}'
+
+    Not performant.
+
+    Requires pyyaml.
+
+    >>> st = 'a str with var stuff = {a: [{"v": 12}]} and such'
+    >>> get_all_objects(st)
+    [{'a': [{'v': 12}]}, {'v': 12}]
+    """
+    # Helper functions
+
+    def indexall(topstr, substr):
+        return [m.start() for m in re.finditer(re.escape(substr), topstr)]
+
+    def try_yaml_load(some_str, **kwa):
+        try:
+            return yaml.safe_load(some_str, **kwa)
+        except Exception:
+            return
+
+    # Permutate them all
+    results = [try_yaml_load(text[from_:to_ + 1])
+               for from_ in indexall(text, '{')
+               for to_ in indexall(text, '}')]
+    # Drop the failures
+    results = [val for val in results if val is not None]
+    assert all(isinstance(val, dict) for val in results)
+    return results
+
+
 # Debug helper
 def setdiff(set_a, set_b):
     """ RTFS """
