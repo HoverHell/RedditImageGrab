@@ -49,6 +49,21 @@ def indexall_re(topstr, substr_re):
     return (m.start() for m in re.finditer(substr_re, topstr))
 
 
+def walker(text, opening='{', closing='}'):
+    """ A near-useless experiment that was intended for `get_all_objects` """
+    stack = []
+    for pos in xrange(len(text)):
+        if text[pos:pos + len(opening)] == opening:
+            stack.append(pos)
+            continue
+        if text[pos:pos + len(closing)] == closing:
+            try:
+                start_pos = stack.pop(-1)
+            except IndexError:
+                continue
+            yield text[start_pos:pos + 1]
+
+
 def try_yaml_load(some_str, **kwa):
     import yaml
     try:
@@ -57,18 +72,31 @@ def try_yaml_load(some_str, **kwa):
         return
 
 
-def get_all_objects(text):
+def get_all_objects(text, beginning=r'{'):
     """ Zealous obtainer of mappings from a text, e.g. in javascript
     or JSON or whatever. Anything between '{' and '}'
 
-    Not performant.
-
-    Requires pyyaml.
+    Not performant. Requires pyyaml.
 
     >>> st = 'a str with var stuff = {a: [{"v": 12}]} and such'
-    >>> get_all_objects(st)
-    [{'a': [{'v': 12}]}, {'v': 12}]
+    >>> next(get_all_objects(st))
+    {'a': [{'v': 12}]}
     """
+    import yaml
+    # TODO?: somehow optimise the slicing?
+    for from_ in indexall_re(text, beginning):
+        loader = yaml.SafeLoader(StringIO(text))
+        loader.forward(from_)
+        # loader.update(from_)
+        try:
+            part_res = loader.get_data()
+        except Exception:
+            continue
+        assert isinstance(part_res, dict)
+        yield part_res
+
+
+def get_all_objects(text):
     # Helper functions
 
     # Permutate them all
