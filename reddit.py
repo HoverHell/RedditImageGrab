@@ -6,13 +6,27 @@ from urllib2 import urlopen, Request, HTTPError
 from json import JSONDecoder
 
 
-def getitems(subreddit, previd=''):
+def getitems(subreddit, multireddit, previd=''):
     """Return list of items from a subreddit."""
-    url = 'http://www.reddit.com/r/%s.json' % subreddit
+    if multireddit:
+        if not '/m/' in subreddit:
+            warning = ('That doesn\'t look like a multireddit. Are you sure'
+                        'you need that -multireddit flag?')
+            print warning
+            sys.exit(1)
+        url = 'http://www.reddit.com/user/%s.json' % subreddit
+    if not multireddit:
+        if '/m/' in subreddit:
+            warning = ('It looks like you are trying to fetch a multireddit. \n'
+                       'Check the -multireddit flag. '
+                       'Call --help for more info')
+            print warning
+            sys.exit(1)
+        url = 'http://www.reddit.com/r/%s.json' % subreddit
     # Get items after item with 'id' of previd.
-    
+
     hdr = { 'User-Agent' : 'RedditImageGrab script.' }
-    
+
     if previd:
         url = '%s?after=t3_%s' % (url, previd)
     try:
