@@ -134,7 +134,7 @@ def download_from_url(url, dest_file):
         filetype = 'unknown'
 
     # Only try to download acceptable image types
-    if not filetype in ['image/jpeg', 'image/png', 'image/gif']:
+    if not filetype in ['image/jpeg', 'image/png', 'image/gif','video/webm','video/mp4']:
         raise WrongFileTypeException('WRONG FILE TYPE: %s has type: %s!' % (url, filetype))
 
     filedata = response.read()
