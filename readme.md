@@ -29,8 +29,6 @@ optional arguments:
     --filename-format FILENAME_FORMAT
                   Specify filename format: reddit (default), title or url
 
-=======
-
 
 # Examples
 

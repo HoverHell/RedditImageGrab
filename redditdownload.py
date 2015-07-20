@@ -6,7 +6,7 @@ import StringIO
 from urllib2 import urlopen, HTTPError, URLError
 from httplib import InvalidURL
 from argparse import ArgumentParser
-from os.path import exists as pathexists, join as pathjoin, basename as pathbasename, splitext as pathsplitext, basename as pathbasename, splitext as pathsplitext
+from os.path import exists as pathexists, join as pathjoin, basename as pathbasename, splitext as pathsplitext
 from os import mkdir, getcwd
 from reddit import getitems
 from HTMLParser import HTMLParser

@@ -1,6 +1,7 @@
 language: python
 python:
   - "2.7"
+<<<<<<< costum-build
 
 before_install:
   pip install codecov
@@ -12,3 +13,9 @@ script: nosetests
 
 after_success:
   codecov
+=======
+# command to install dependencies
+install: "pip install -r requirements.txt"
+# command to run tests
+script: nosetests
+>>>>>>> bba847c add .travis.yaml and fix dir argument
