@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/rachmadaniHaryono/RedditImageGrab.svg?branch=master)](https://travis-ci.org/rachmadaniHaryono/RedditImageGrab)
 # RedditImageGrab
 
 I created this script to download the latest (and greatest) wallpapers
@@ -7,7 +8,6 @@ any JPEG or PNG formatted image that it found listed in the specified
 subreddit and download them to a folder.
 
 # Usage:
-=======
     redditdownload.py [-h] [-last l] [-score s] [-num n] [-update] [-sfw] [-nsfw] [-regex REGEX] [-verbose] <subreddit> <dest_file>
 Downloads files with specified extension from the specified subreddit.
 
