@@ -11,7 +11,14 @@ from os import mkdir, getcwd
 from reddit import getitems
 from HTMLParser import HTMLParser
 
-from gfycat.gfycat import gfycat
+try:
+    from gfycat.gfycat import gfycat
+    GFYCAT_OPTION = True
+except ImportError:
+    print "'gfycat' module is not installed"
+    GFYCAT_OPTION = False
+    pass
+
 # Used to extract src from Deviantart URLs
 class DeviantHTMLParser(HTMLParser):
     """
@@ -210,7 +217,7 @@ def extract_urls(url):
         urls = process_imgur_url(url)
     elif 'deviantart.com' in url:
         urls = process_deviant_url(url)
-    elif 'gfycat.com' in url:
+    elif 'gfycat.com' in url and GFYCAT_OPTION:
         #choose the smallest file on gfycat
         gfycat_json = gfycat().more(url.split("gfycat.com/")[-1]).json()
         if gfycat_json["mp4Size"] < gfycat_json["webmSize"]:
