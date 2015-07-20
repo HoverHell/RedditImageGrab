@@ -6,7 +6,7 @@ import StringIO
 from urllib2 import urlopen, HTTPError, URLError
 from httplib import InvalidURL
 from argparse import ArgumentParser
-from os.path import exists as pathexists, join as pathjoin, basename as pathbasename, splitext as pathsplitext
+from os.path import exists as pathexists, join as pathjoin, basename as pathbasename, splitext as pathsplitext, basename as pathbasename, splitext as pathsplitext
 from os import mkdir, getcwd
 from reddit import getitems
 from HTMLParser import HTMLParser
@@ -244,7 +244,7 @@ if __name__ == "__main__":
     if GFYCAT_OPTION:
         PARSER.add_argument('--mirror-gfycat', default=False, action='store_true', required=False, help='Download available mirror in gfycat.com.')
     ARGS = PARSER.parse_args()
-
+    PARSER.add_argument('--filename-format', default='reddit', action='store_true', required=False, help='Specify filename format: "reddit" for reddit id or "url" for file url')
     print 'Downloading images from "%s" subreddit' % (ARGS.reddit)
 
     TOTAL = DOWNLOADED = ERRORS = SKIPPED = FAILED = 0
@@ -306,7 +306,10 @@ if __name__ == "__main__":
 
                     # Only append numbers if more than one file.
                     FILENUM = ('_%d' % FILECOUNT if len(URLS) > 1 else '')
-                    FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)
+                    if ARGS.filename_format is 'url' :
+                        FILENAME = '%s%s%s' % (pathsplitext(pathbasename(URL))[1], FILENUM, FILEEXT)
+                    else:
+                        FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)
                     FILEPATH = pathjoin(ARGS.dir, FILENAME)
                     
                     # Improve debuggability list URL before download too.
