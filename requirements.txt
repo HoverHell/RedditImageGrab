@@ -1,0 +1,1 @@
+-e git://github.com/rachmadaniHaryono/gfycat#egg=gfycat

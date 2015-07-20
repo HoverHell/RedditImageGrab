@@ -6,30 +6,25 @@ fresh and interesting. The main idea is that the script would download
 any JPEG or PNG formatted image that it found listed in the specified
 subreddit and download them to a folder.
 
-# Usage
+# Usage: 
+    redditdownload.py [-h] [-last l] [-score s] [-num n] [-update] [-sfw] [-nsfw] [-regex REGEX] [-verbose] <subreddit> <dest_file>
+Downloads files with specified extension from the specified subreddit.
 
-Running ```python redditdownload.py -h``` will show this help message:
+positional arguments:
 
+    <subreddit>    Subreddit name.
+    <dest_file>    Dir to put downloaded files in.
+optional arguments:
 
-> usage: redditdownload.py [-h] [-last l] [-score s] [-num n] [-update]
->       [-sfw] [-nsfw] [-regex REGEX] [-verbose] <subreddit> <dest_file>
-> 
-> Downloads files with specified extension from the specified subreddit.
-> 
-> positional arguments:
->   <subreddit>   Subreddit name.
->   <dest_file>   Dir to put downloaded files in.
-> 
-> optional arguments:
->   -h, --help    show this help message and exit
->   -last l       ID of the last downloaded file.
->   -score s      Minimum score of images to download.
->   -num n        Number of images to download.
->   -update       Run until you encounter a file already downloaded.
->   -sfw          Download safe for work images only.
->   -nsfw         Download NSFW images only.
->   -regex REGEX  Use Python regex to filter based on title.
->   -verbose      Enable verbose output.
+    -h, --help    show this help message and exit
+    -last l       ID of the last downloaded file.
+    -score s      Minimum score of images to download.
+    -num n        Number of images to download.
+    -update       Run until you encounter a file already downloaded.
+    -sfw          Download safe for work images only.
+    -nsfw         Download NSFW images only.
+    -regex REGEX  Use Python regex to filter based on title.
+    -verbose      Enable verbose output.
 
 
 # Examples
