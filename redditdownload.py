@@ -11,6 +11,7 @@ from os import mkdir
 from reddit import getitems
 from HTMLParser import HTMLParser
 
+from gfycat.gfycat import gfycat
 # Used to extract src from Deviantart URLs
 class DeviantHTMLParser(HTMLParser):
     """
@@ -125,6 +126,10 @@ def download_from_url(url, dest_file):
         filetype = 'image/png'
     elif url.endswith('.gif'):
         filetype = 'image/gif'
+    elif url.endswith('.mp4'):
+        filetype = 'video/mp4'
+    elif url.endswith('.webm'):
+        filetype = 'video/webm'
     else:
         filetype = 'unknown'
 
@@ -205,6 +210,13 @@ def extract_urls(url):
         urls = process_imgur_url(url)
     elif 'deviantart.com' in url:
         urls = process_deviant_url(url)
+    elif 'gfycat.com' in url:
+        #choose the smallest file on gfycat
+        gfycat_json = gfycat().more(url.split("gfycat.com/")[-1]).json()
+        if gfycat_json["mp4Size"] < gfycat_json["webmSize"]:
+            urls = [gfycat_json["mp4Url"]]
+        else :
+            urls = [gfycat_json["webmUrl"]]
     else:
         urls = [url]
 
