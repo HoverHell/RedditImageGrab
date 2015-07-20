@@ -241,6 +241,8 @@ if __name__ == "__main__":
     PARSER.add_argument('-nsfw', default=False, action='store_true', required=False, help='Download NSFW images only.')
     PARSER.add_argument('-regex', default=None, action='store', required=False, help='Use Python regex to filter based on title.')
     PARSER.add_argument('-verbose', default=False, action='store_true', required=False, help='Enable verbose output.')
+    if GFYCAT_OPTION:
+        PARSER.add_argument('--mirror-gfycat', default=False, action='store_true', required=False, help='Download available mirror in gfycat.com.')
     ARGS = PARSER.parse_args()
 
     print 'Downloading images from "%s" subreddit' % (ARGS.reddit)
@@ -309,6 +311,12 @@ if __name__ == "__main__":
                     
                     # Improve debuggability list URL before download too.
                     print '    Attempting to download URL [%s] as [%s].' % (URL.encode('utf-8'), FILENAME.encode('utf-8'))
+
+                    # Find gfycat if requested
+                    if URL.endswith('gif') and ARGS.mirror_gfycat:
+                        check = gfycat().check(URL)
+                        if check.get("urlKnown") :
+                            URL = check.get('webmUrl')                        
 
                     # Download the image
                     download_from_url(URL, FILEPATH)
