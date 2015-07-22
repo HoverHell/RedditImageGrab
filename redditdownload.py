@@ -244,7 +244,7 @@ if __name__ == "__main__":
     PARSER.add_argument('-verbose', default=False, action='store_true', required=False, help='Enable verbose output.')
     if GFYCAT_OPTION:
         PARSER.add_argument('--mirror-gfycat', default=False, action='store_true', required=False, help='Download available mirror in gfycat.com.')
-    PARSER.add_argument('--filename-format', default='reddit', required=False, help='Specify filename format: "reddit" for reddit id (default) or "url" for file url')
+    PARSER.add_argument('--filename-format', default='reddit',required=False, help='Specify filename format: "reddit" for reddit id (default) or "url" for file url')
     ARGS = PARSER.parse_args()
 
     print 'Downloading images from "%s" subreddit' % (ARGS.reddit)
@@ -301,6 +301,12 @@ if __name__ == "__main__":
             URLS = extract_urls(ITEM['url'])
             for URL in URLS:
                 try:
+                    # Find gfycat if requested
+                    if URL.endswith('gif') and ARGS.mirror_gfycat:
+                        check = gfycat().check(URL)
+                        if check.get("urlKnown") :
+                            URL = check.get('webmUrl')
+
                     # Trim any http query off end of file extension.
                     FILEEXT = pathsplitext(URL)[1]
                     if '?' in FILEEXT:
@@ -308,20 +314,14 @@ if __name__ == "__main__":
 
                     # Only append numbers if more than one file.
                     FILENUM = ('_%d' % FILECOUNT if len(URLS) > 1 else '')
-                    if ARGS.filename_format is 'url' :
-                        FILENAME = '%s%s%s' % (pathsplitext(pathbasename(URL))[1], FILENUM, FILEEXT)
+                    if ARGS.filename_format == 'url' :
+                        FILENAME = '%s%s%s' % (pathsplitext(pathbasename(URL))[0], FILENUM, FILEEXT)
                     else:
                         FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)
                     FILEPATH = pathjoin(ARGS.dir, FILENAME)
-                    
+                                            
                     # Improve debuggability list URL before download too.
                     print '    Attempting to download URL [%s] as [%s].' % (URL.encode('utf-8'), FILENAME.encode('utf-8'))
-
-                    # Find gfycat if requested
-                    if URL.endswith('gif') and ARGS.mirror_gfycat:
-                        check = gfycat().check(URL)
-                        if check.get("urlKnown") :
-                            URL = check.get('webmUrl')                        
 
                     # Download the image
                     download_from_url(URL, FILEPATH)
