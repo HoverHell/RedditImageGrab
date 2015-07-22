@@ -167,10 +167,11 @@ def process_imgur_url(url):
     else:
         # Extract the file extension
         ext = pathsplitext(pathbasename(url))[1]
+        if ext == 'gifv':
+            url = url.replace('.gifv','.gif')
         if not ext:
             # Append a default
             url += '.jpg'
-
     return [url]
 
 def  process_deviant_url(url):
@@ -243,8 +244,9 @@ if __name__ == "__main__":
     PARSER.add_argument('-verbose', default=False, action='store_true', required=False, help='Enable verbose output.')
     if GFYCAT_OPTION:
         PARSER.add_argument('--mirror-gfycat', default=False, action='store_true', required=False, help='Download available mirror in gfycat.com.')
+    PARSER.add_argument('--filename-format', default='reddit', required=False, help='Specify filename format: "reddit" for reddit id (default) or "url" for file url')
     ARGS = PARSER.parse_args()
-    PARSER.add_argument('--filename-format', default='reddit', action='store_true', required=False, help='Specify filename format: "reddit" for reddit id or "url" for file url')
+
     print 'Downloading images from "%s" subreddit' % (ARGS.reddit)
 
     TOTAL = DOWNLOADED = ERRORS = SKIPPED = FAILED = 0
