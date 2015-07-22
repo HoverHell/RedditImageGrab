@@ -167,7 +167,7 @@ def process_imgur_url(url):
     else:
         # Extract the file extension
         ext = pathsplitext(pathbasename(url))[1]
-        if ext == 'gifv':
+        if ext == '.gifv':
             url = url.replace('.gifv','.gif')
         if not ext:
             # Append a default
