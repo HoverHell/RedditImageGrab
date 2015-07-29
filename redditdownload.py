@@ -15,7 +15,6 @@ try:
     from gfycat.gfycat import gfycat
     GFYCAT_OPTION = True
 except ImportError:
-    print "'gfycat' module is not installed"
     GFYCAT_OPTION = False
     pass
 
@@ -96,7 +95,7 @@ def extract_imgur_album_urls(album_url):
         items += results
 
     memfile.close()
-
+    # TODO : url may contain gif image.
     urls = ['http://i.imgur.com/%s.jpg' % (imghash) for imghash in items]
 
     return urls
