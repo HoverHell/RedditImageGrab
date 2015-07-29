@@ -415,7 +415,7 @@ def do_horrible_things(url=url2, do_horrible_thing_func=do_horrible_thing, urls_
         # (urljoin should be done already though)
         return [urlparse.urljoin(url, val) for val in res]
 
-    imgs, links = _pp(bs2img(bs)), _pp(bs2lnk(bs))
+    imgs, links = bs2img(bs), bs2lnk(bs)
     to_check = imgs + links
     # ...
     if 'flickr.' in url:
@@ -428,6 +428,7 @@ def do_horrible_things(url=url2, do_horrible_thing_func=do_horrible_thing, urls_
                 to_check += flickr_stuff  ## Try too much things.
     # ...
     to_check_baselen = len(to_check)
+    to_check = _pp(to_check)
     if urls_to_skip:
         to_check = [v for v in to_check if v not in urls_to_skip]
     # Synopsis: check each url on the page for being a notably large image and download all such

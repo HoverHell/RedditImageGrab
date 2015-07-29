@@ -11,6 +11,24 @@ from os import mkdir
 from reddit import getitems
 from HTMLParser import HTMLParser
 
+
+def request(url, *ar, **kwa):
+    _retries = kwa.pop('_retries', 4)
+    _retry_pause = kwa.pop('_retry_pause', 3)
+    res = None
+    for _try in xrange(_retries):
+        try:
+            res = urlopen(url, *ar, **kwa)
+        except Exception as exc:
+            if _try == _retries - 1:
+                raise
+            print "Try %r err %r  (%r)" % (
+                _try, exc, url)
+        else:
+            break
+    return res
+
+
 # Used to extract src from Deviantart URLs
 class DeviantHTMLParser(HTMLParser):
     """
@@ -65,7 +83,7 @@ def extract_imgur_album_urls(album_url):
     Returns:
         List of qualified imgur URLs
     """
-    response = urlopen(album_url)
+    response = request(album_url)
     info = response.info()
 
     # Rudimentary check to ensure the URL actually specifies an HTML file
@@ -113,7 +131,7 @@ def download_from_url(url, dest_file):
     if pathexists(dest_file):
         raise FileExistsException('URL [%s] already downloaded.' % url)
 
-    response = urlopen(url)
+    response = request(url)
     info = response.info()
 
     # Work out file type either from the response or the url.
@@ -174,7 +192,7 @@ def  process_deviant_url(url):
         return [url]
     else:
         # Get Page and parse for image link
-        response = urlopen(url)
+        response = request(url)
         filedata = response.read()
         parser = DeviantHTMLParser()
         try:
