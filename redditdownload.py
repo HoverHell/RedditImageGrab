@@ -311,10 +311,10 @@ if __name__ == "__main__":
                     if '?' in FILEEXT:
                         FILEEXT = FILEEXT[:FILEEXT.index('?')]
 
-                    # Only append numbers if more than one file.
+                    # Only append numbers if more than one file 
                     FILENUM = ('_%d' % FILECOUNT if len(URLS) > 1 else '')
                     if ARGS.filename_format == 'url' :
-                        FILENAME = '%s%s%s' % (pathsplitext(pathbasename(URL))[0], FILENUM, FILEEXT)
+                        FILENAME = '%s%s%s' % (pathsplitext(pathbasename(URL))[0], '', FILEEXT)
                     else:
                         FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)
                     FILEPATH = pathjoin(ARGS.dir, FILENAME)
