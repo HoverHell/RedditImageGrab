@@ -232,6 +232,7 @@ if __name__ == "__main__":
     PARSER = ArgumentParser(description='Downloads files with specified extension from the specified subreddit.')
     PARSER.add_argument('reddit', metavar='<subreddit>', help='Subreddit name.')
     PARSER.add_argument('dir', metavar='<dest_file>', help='Dir to put downloaded files in.')
+    PARSER.add_argument('-multireddit', default=False, action='store_true', required=False, help='Take multirredit instead of subreddit as input. If so, provide /user/m/multireddit-name as argument')
     PARSER.add_argument('-last', metavar='l', default='', required=False, help='ID of the last downloaded file.')
     PARSER.add_argument('-score', metavar='s', default=0, type=int, required=False, help='Minimum score of images to download.')
     PARSER.add_argument('-num', metavar='n', default=0, type=int, required=False, help='Number of images to download.')
@@ -259,7 +260,7 @@ if __name__ == "__main__":
     LAST = ARGS.last
 
     while not FINISHED:
-        ITEMS = getitems(ARGS.reddit, LAST)
+        ITEMS = getitems(ARGS.reddit, ARGS.multireddit, LAST)
         if not ITEMS:
             # No more items to process
             break
@@ -305,7 +306,7 @@ if __name__ == "__main__":
                     FILENUM = ('_%d' % FILECOUNT if len(URLS) > 1 else '')
                     FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)
                     FILEPATH = pathjoin(ARGS.dir, FILENAME)
-                    
+
                     # Improve debuggability list URL before download too.
                     print '    Attempting to download URL [%s] as [%s].' % (URL.encode('utf-8'), FILENAME.encode('utf-8'))
 
