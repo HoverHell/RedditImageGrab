@@ -2,8 +2,6 @@
 
 from os import path, getcwd
 from setuptools import setup, find_packages
-from apt.package import Package
-from IPython.core.release import long_description
 
 with open(path.join(getcwd(), 'readme.md')) as f:
     long_description = f.read()
