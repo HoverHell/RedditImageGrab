@@ -301,7 +301,7 @@ if __name__ == "__main__":
                     # create filename based on given input from user
                     if ARGS.filename_format == 'url' :
                         FILENAME = '%s%s%s' % (pathsplitext(pathbasename(URL))[0], '', FILEEXT)
-                    if ARGS.filename_format == 'title' :
+                    elif ARGS.filename_format == 'title' :
                         FILENAME = '%s%s%s' % (slugify(ITEM['title']), FILENUM, FILEEXT)
                         if len(FILENAME) >= 256 : 
                             shortened_item_title = slugify(ITEM['title'])[:256-len(FILENAME)]
