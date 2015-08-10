@@ -146,7 +146,7 @@ def process_imgur_url(url):
     Returns:
         list of imgur URLs
     """
-    if 'imgur.com/a/' in url:
+    if 'imgur.com/a/' in url or 'imgur.com/gallery/' in url:
         return extract_imgur_album_urls(url)
 
     # Change .png to .jpg for imgur urls.
@@ -222,6 +222,7 @@ if __name__ == "__main__":
     PARSER.add_argument('-nsfw', default=False, action='store_true', required=False, help='Download NSFW images only.')
     PARSER.add_argument('-regex', default=None, action='store', required=False, help='Use Python regex to filter based on title.')
     PARSER.add_argument('-verbose', default=False, action='store_true', required=False, help='Enable verbose output.')
+    PARSER.add_argument('-skipAlbums', default=False, action='store_true', required=False, help='Skip all albums')
     ARGS = PARSER.parse_args()
 
     print 'Downloading images from "%s" subreddit' % (ARGS.reddit)
@@ -248,7 +249,10 @@ if __name__ == "__main__":
 
         for ITEM in ITEMS:
             TOTAL += 1
-
+            
+            if 'reddit.com/r/' + ARGS.reddit + '/comments/' in ITEM['url']:
+                continue
+            
             if ITEM['score'] < ARGS.score:
                 if ARGS.verbose:
                     print '    SCORE: %s has score of %s which is lower than required score of %s.' % (ITEM['id'], ITEM['score'], ARGS.score)
@@ -270,6 +274,12 @@ if __name__ == "__main__":
             elif ARGS.regex and not re.match(RE_RULE, ITEM['title']):
                 if ARGS.verbose:
                     print '    Regex match failed'
+
+                SKIPPED += 1
+                continue
+            elif ARGS.skipAlbums and 'imgur.com/a/' in ITEM['url']:
+                if ARGS.verbose:
+                    print '    Album found, skipping %s' % (ITEM['id'])
 
                 SKIPPED += 1
                 continue
