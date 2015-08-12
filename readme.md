@@ -7,6 +7,7 @@ any JPEG or PNG formatted image that it found listed in the specified
 subreddit and download them to a folder.
 
 # Usage:
+=======
     redditdownload.py [-h] [-last l] [-score s] [-num n] [-update] [-sfw] [-nsfw] [-regex REGEX] [-verbose] <subreddit> <dest_file>
 Downloads files with specified extension from the specified subreddit.
 
@@ -27,6 +28,8 @@ optional arguments:
     -verbose      Enable verbose output.
     --filename-format FILENAME_FORMAT
                   Specify filename format: reddit (default), title or url
+
+=======
 
 
 # Examples

@@ -6,10 +6,12 @@ import StringIO
 from urllib2 import urlopen, HTTPError, URLError
 from httplib import InvalidURL
 from argparse import ArgumentParser
-from os.path import exists as pathexists, join as pathjoin, basename as pathbasename, splitext as pathsplitext
-from os import mkdir
+from os.path import exists as pathexists, join as pathjoin, basename as pathbasename, splitext as pathsplitext, basename as pathbasename, splitext as pathsplitext
+from os import mkdir, getcwd
 from reddit import getitems
 from HTMLParser import HTMLParser
+
+from gfycat import gfycat
 
 # Used to extract src from Deviantart URLs
 class DeviantHTMLParser(HTMLParser):
@@ -88,7 +90,7 @@ def extract_imgur_album_urls(album_url):
         items += results
 
     memfile.close()
-
+    # TODO : url may contain gif image.
     urls = ['http://i.imgur.com/%s.jpg' % (imghash) for imghash in items]
 
     return urls
@@ -125,11 +127,15 @@ def download_from_url(url, dest_file):
         filetype = 'image/png'
     elif url.endswith('.gif'):
         filetype = 'image/gif'
+    elif url.endswith('.mp4'):
+        filetype = 'video/mp4'
+    elif url.endswith('.webm'):
+        filetype = 'video/webm'
     else:
         filetype = 'unknown'
 
     # Only try to download acceptable image types
-    if not filetype in ['image/jpeg', 'image/png', 'image/gif']:
+    if not filetype in ['image/jpeg', 'image/png', 'image/gif','video/webm','video/mp4']:
         raise WrongFileTypeException('WRONG FILE TYPE: %s has type: %s!' % (url, filetype))
 
     filedata = response.read()
@@ -155,10 +161,11 @@ def process_imgur_url(url):
     else:
         # Extract the file extension
         ext = pathsplitext(pathbasename(url))[1]
+        if ext == '.gifv':
+            url = url.replace('.gifv','.gif')
         if not ext:
             # Append a default
             url += '.jpg'
-
     return [url]
 
 def  process_deviant_url(url):
@@ -205,6 +212,13 @@ def extract_urls(url):
         urls = process_imgur_url(url)
     elif 'deviantart.com' in url:
         urls = process_deviant_url(url)
+    elif 'gfycat.com' in url:
+        #choose the smallest file on gfycat
+        gfycat_json = gfycat().more(url.split("gfycat.com/")[-1]).json()
+        if gfycat_json["mp4Size"] < gfycat_json["webmSize"]:
+            urls = [gfycat_json["mp4Url"]]
+        else :
+            urls = [gfycat_json["webmUrl"]]
     else:
         urls = [url]
 
@@ -226,7 +240,7 @@ def slugify(value):
 if __name__ == "__main__":
     PARSER = ArgumentParser(description='Downloads files with specified extension from the specified subreddit.')
     PARSER.add_argument('reddit', metavar='<subreddit>', help='Subreddit name.')
-    PARSER.add_argument('dir', metavar='<dest_file>', help='Dir to put downloaded files in.')
+    PARSER.add_argument('dir', metavar='<dest_file>',nargs='?', default=getcwd(), help='Dir to put downloaded files in.')
     PARSER.add_argument('-multireddit', default=False, action='store_true', required=False, help='Take multirredit instead of subreddit as input. If so, provide /user/m/multireddit-name as argument')
     PARSER.add_argument('-last', metavar='l', default='', required=False, help='ID of the last downloaded file.')
     PARSER.add_argument('-score', metavar='s', default=0, type=int, required=False, help='Minimum score of images to download.')
@@ -236,11 +250,10 @@ if __name__ == "__main__":
     PARSER.add_argument('-nsfw', default=False, action='store_true', required=False, help='Download NSFW images only.')
     PARSER.add_argument('-regex', default=None, action='store', required=False, help='Use Python regex to filter based on title.')
     PARSER.add_argument('-verbose', default=False, action='store_true', required=False, help='Enable verbose output.')
-<<<<<<< HEAD
     PARSER.add_argument('-skipAlbums', default=False, action='store_true', required=False, help='Skip all albums')
-=======
+    PARSER.add_argument('--mirror-gfycat', default=False, action='store_true', required=False, help='Download available mirror in gfycat.com.')
     PARSER.add_argument('--filename-format', default='reddit',required=False, help='Specify filename format: reddit (default), title or url')
->>>>>>> refs/heads/filename-support
+
     ARGS = PARSER.parse_args()
     print 'Downloading images from "%s" subreddit' % (ARGS.reddit)
 
@@ -305,13 +318,20 @@ if __name__ == "__main__":
             URLS = extract_urls(ITEM['url'])
             for URL in URLS:
                 try:
+                    # Find gfycat if requested
+                    if URL.endswith('gif') and ARGS.mirror_gfycat:
+                        check = gfycat().check(URL)
+                        if check.get("urlKnown") :
+                            URL = check.get('webmUrl')
+
                     # Trim any http query off end of file extension.
                     FILEEXT = pathsplitext(URL)[1]
                     if '?' in FILEEXT:
                         FILEEXT = FILEEXT[:FILEEXT.index('?')]
 
-                    # Only append numbers if more than one file.
+                    # Only append numbers if more than one file 
                     FILENUM = ('_%d' % FILECOUNT if len(URLS) > 1 else '')
+
                     # create filename based on given input from user
                     if ARGS.filename_format == 'url' :
                         FILENAME = '%s%s%s' % (pathsplitext(pathbasename(URL))[0], '', FILEEXT)
@@ -324,7 +344,7 @@ if __name__ == "__main__":
                         FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)
                     # join file with directory
                     FILEPATH = pathjoin(ARGS.dir, FILENAME)
-
+ 
                     # Improve debuggability list URL before download too.
                     print '    Attempting to download URL [%s] as [%s].' % (URL.encode('utf-8'), FILENAME.encode('utf-8'))
 
