@@ -210,6 +210,19 @@ def extract_urls(url):
 
     return urls
 
+def slugify(value):
+    """
+    Normalizes string, converts to lowercase, removes non-alpha characters,
+    and converts spaces to hyphens.
+    """
+    # taken from http://stackoverflow.com/a/295466
+    # with some modification
+    import unicodedata
+    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
+    value = unicode(re.sub('[^\w\s-]', '', value).strip())
+    # value = re.sub('[-\s]+', '-', value) # not replacing space with hypen
+    return value
+
 if __name__ == "__main__":
     PARSER = ArgumentParser(description='Downloads files with specified extension from the specified subreddit.')
     PARSER.add_argument('reddit', metavar='<subreddit>', help='Subreddit name.')
@@ -223,9 +236,12 @@ if __name__ == "__main__":
     PARSER.add_argument('-nsfw', default=False, action='store_true', required=False, help='Download NSFW images only.')
     PARSER.add_argument('-regex', default=None, action='store', required=False, help='Use Python regex to filter based on title.')
     PARSER.add_argument('-verbose', default=False, action='store_true', required=False, help='Enable verbose output.')
+<<<<<<< HEAD
     PARSER.add_argument('-skipAlbums', default=False, action='store_true', required=False, help='Skip all albums')
+=======
+    PARSER.add_argument('--filename-format', default='reddit',required=False, help='Specify filename format: reddit (default), title or url')
+>>>>>>> refs/heads/filename-support
     ARGS = PARSER.parse_args()
-
     print 'Downloading images from "%s" subreddit' % (ARGS.reddit)
 
     TOTAL = DOWNLOADED = ERRORS = SKIPPED = FAILED = 0
@@ -296,7 +312,17 @@ if __name__ == "__main__":
 
                     # Only append numbers if more than one file.
                     FILENUM = ('_%d' % FILECOUNT if len(URLS) > 1 else '')
-                    FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)
+                    # create filename based on given input from user
+                    if ARGS.filename_format == 'url' :
+                        FILENAME = '%s%s%s' % (pathsplitext(pathbasename(URL))[0], '', FILEEXT)
+                    elif ARGS.filename_format == 'title' :
+                        FILENAME = '%s%s%s' % (slugify(ITEM['title']), FILENUM, FILEEXT)
+                        if len(FILENAME) >= 256 : 
+                            shortened_item_title = slugify(ITEM['title'])[:256-len(FILENAME)]
+                            FILENAME = '%s%s%s' % (shortened_item_title, FILENUM, FILEEXT)
+                    else:
+                        FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)
+                    # join file with directory
                     FILEPATH = pathjoin(ARGS.dir, FILENAME)
 
                     # Improve debuggability list URL before download too.
