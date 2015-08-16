@@ -12,6 +12,7 @@ from reddit import getitems
 from HTMLParser import HTMLParser
 
 from gfycat import gfycat
+from fileinput import filename
 
 # Used to extract src from Deviantart URLs
 class DeviantHTMLParser(HTMLParser):
@@ -255,7 +256,14 @@ if __name__ == "__main__":
     PARSER.add_argument('--filename-format', default='reddit',required=False, help='Specify filename format: reddit (default), title or url')
 
     ARGS = PARSER.parse_args()
-    print 'Downloading images from "%s" subreddit' % (ARGS.reddit)
+    if '+' not in ARGS.reddit :
+        print 'Downloading images from "%s" subreddit' % (ARGS.reddit)
+    elif len('Downloading images from "%s" subreddit' % (ARGS.reddit)) > 80 :
+        # other print format if the line is more than 80 chars
+        print 'Downloadning images from following subreddit:\n%s' % ('\n'.join(ARGS.reddit.split('+')))
+    else :
+        # print in one line but with nicer format
+        'Downloading images from "%s" subreddit' % (', '.join(ARGS.reddit.split('+')))
 
     TOTAL = DOWNLOADED = ERRORS = SKIPPED = FAILED = 0
     FINISHED = False
@@ -350,7 +358,7 @@ if __name__ == "__main__":
 
                     # Download the image
                     download_from_url(URL, FILEPATH)
-
+                    
                     # Image downloaded successfully!
                     print '    Sucessfully downloaded URL [%s] as [%s].' % (URL, FILENAME)
                     DOWNLOADED += 1
