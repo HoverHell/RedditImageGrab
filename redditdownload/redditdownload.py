@@ -238,24 +238,28 @@ def slugify(value):
     # value = re.sub('[-\s]+', '-', value) # not replacing space with hypen
     return value
 
-if __name__ == "__main__":
+def parse_args(args):
     PARSER = ArgumentParser(description='Downloads files with specified extension from the specified subreddit.')
     PARSER.add_argument('reddit', metavar='<subreddit>', help='Subreddit name.')
     PARSER.add_argument('dir', metavar='<dest_file>',nargs='?', default=getcwd(), help='Dir to put downloaded files in.')
-    PARSER.add_argument('-multireddit', default=False, action='store_true', required=False, help='Take multirredit instead of subreddit as input. If so, provide /user/m/multireddit-name as argument')
-    PARSER.add_argument('-last', metavar='l', default='', required=False, help='ID of the last downloaded file.')
-    PARSER.add_argument('-score', metavar='s', default=0, type=int, required=False, help='Minimum score of images to download.')
-    PARSER.add_argument('-num', metavar='n', default=0, type=int, required=False, help='Number of images to download.')
-    PARSER.add_argument('-update', default=False, action='store_true', required=False, help='Run until you encounter a file already downloaded.')
-    PARSER.add_argument('-sfw', default=False, action='store_true', required=False, help='Download safe for work images only.')
-    PARSER.add_argument('-nsfw', default=False, action='store_true', required=False, help='Download NSFW images only.')
-    PARSER.add_argument('-regex', default=None, action='store', required=False, help='Use Python regex to filter based on title.')
-    PARSER.add_argument('-verbose', default=False, action='store_true', required=False, help='Enable verbose output.')
-    PARSER.add_argument('-skipAlbums', default=False, action='store_true', required=False, help='Skip all albums')
+    PARSER.add_argument('--multireddit', default=False, action='store_true', required=False, help='Take multirredit instead of subreddit as input. If so, provide /user/m/multireddit-name as argument')
+    PARSER.add_argument('--last', metavar='l', default='', required=False, help='ID of the last downloaded file.')
+    PARSER.add_argument('--score', metavar='s', default=0, type=int, required=False, help='Minimum score of images to download.')
+    PARSER.add_argument('--num', metavar='n', default=0, type=int, required=False, help='Number of images to download.')
+    PARSER.add_argument('--update', default=False, action='store_true', required=False, help='Run until you encounter a file already downloaded.')
+    PARSER.add_argument('--sfw', default=False, action='store_true', required=False, help='Download safe for work images only.')
+    PARSER.add_argument('--nsfw', default=False, action='store_true', required=False, help='Download NSFW images only.')
+    PARSER.add_argument('--regex', default=None, action='store', required=False, help='Use Python regex to filter based on title.')
+    PARSER.add_argument('--verbose', default=False, action='store_true', required=False, help='Enable verbose output.')
+    PARSER.add_argument('--skipAlbums', default=False, action='store_true', required=False, help='Skip all albums')
     PARSER.add_argument('--mirror-gfycat', default=False, action='store_true', required=False, help='Download available mirror in gfycat.com.')
     PARSER.add_argument('--filename-format', default='reddit',required=False, help='Specify filename format: reddit (default), title or url')
 
-    ARGS = PARSER.parse_args()
+    return PARSER.parse_args(args)
+
+if __name__ == "__main__":
+    parser = parse_args(sys.argv[1:])
+
     if '+' not in ARGS.reddit :
         print 'Downloading images from "%s" subreddit' % (ARGS.reddit)
     elif len('Downloading images from "%s" subreddit' % (ARGS.reddit)) > 80 :
