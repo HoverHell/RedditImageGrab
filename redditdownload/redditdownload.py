@@ -3,6 +3,7 @@
 
 import re
 import StringIO
+import sys
 from urllib2 import urlopen, HTTPError, URLError
 from httplib import InvalidURL
 from argparse import ArgumentParser
@@ -10,6 +11,7 @@ from os.path import exists as pathexists, join as pathjoin, basename as pathbase
 from os import mkdir, getcwd
 from reddit import getitems
 from HTMLParser import HTMLParser
+
 
 from gfycat import gfycat
 from fileinput import filename
@@ -258,7 +260,7 @@ def parse_args(args):
     return PARSER.parse_args(args)
 
 if __name__ == "__main__":
-    parser = parse_args(sys.argv[1:])
+    ARGS = parse_args(sys.argv[1:])
 
     if '+' not in ARGS.reddit :
         print 'Downloading images from "%s" subreddit' % (ARGS.reddit)
