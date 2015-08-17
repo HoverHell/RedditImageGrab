@@ -7,8 +7,11 @@ from os import getcwd
 from redditdownload import parse_args
 
 class TestParseArgs(TestCase):
-	def test_simple_args(self):        
-		parser = parse_args(['funny'])
-		self.assertEqual(parser.reddit,'funny')
-		self.assertEqual(parser.dir, getcwd())
-
+	def test_simple_args(self):		
+		ARGS = parse_args(['funny'])
+		self.assertEqual(ARGS.reddit,'funny')
+		self.assertEqual(ARGS.dir, getcwd())
+		
+	def test_multiple_reddit_plus(self):
+		ARGS = parse_args(['funny+anime'])
+		self.assertEqual(ARGS.reddit,'funny+anime')

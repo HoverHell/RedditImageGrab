@@ -12,7 +12,6 @@ from os import mkdir, getcwd
 from reddit import getitems
 from HTMLParser import HTMLParser
 
-
 from gfycat import gfycat
 from fileinput import filename
 
@@ -259,17 +258,21 @@ def parse_args(args):
 
     return PARSER.parse_args(args)
 
+def parse_reddit_argument(reddit_args):
+    if '+' not in reddit_args :
+        return 'Downloading images from "%s" subreddit' % (reddit_args)
+    elif len('Downloading images from "%s" subreddit' % (reddit_args)) > 80 :
+        # other print format if the line is more than 80 chars
+        return 'Downloadning images from following subreddit:\n%s' % ('\n'.join(reddit_args.split('+')))
+    else :
+        # print in one line but with nicer format
+        return 'Downloading images from "%s" subreddit' % (', '.join(reddit_args.split('+')))
+
+
 if __name__ == "__main__":
     ARGS = parse_args(sys.argv[1:])
 
-    if '+' not in ARGS.reddit :
-        print 'Downloading images from "%s" subreddit' % (ARGS.reddit)
-    elif len('Downloading images from "%s" subreddit' % (ARGS.reddit)) > 80 :
-        # other print format if the line is more than 80 chars
-        print 'Downloadning images from following subreddit:\n%s' % ('\n'.join(ARGS.reddit.split('+')))
-    else :
-        # print in one line but with nicer format
-        'Downloading images from "%s" subreddit' % (', '.join(ARGS.reddit.split('+')))
+    print parse_reddit_argument(ARGS.reddit)
 
     TOTAL = DOWNLOADED = ERRORS = SKIPPED = FAILED = 0
     FINISHED = False
