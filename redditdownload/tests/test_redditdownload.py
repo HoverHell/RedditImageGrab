@@ -15,3 +15,8 @@ class TestParseArgs(TestCase):
 	def test_multiple_reddit_plus(self):
 		ARGS = parse_args(['funny+anime'])
 		self.assertEqual(ARGS.reddit,'funny+anime')
+	
+	def test_nsfw_sfw_arg(self):
+		ARGS = parse_args(['--nsfw --sfw'])
+		self.assertFalse(ARGS.nsfw)
+		self.assertFalse(ARGS.sfw)

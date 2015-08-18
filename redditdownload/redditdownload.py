@@ -256,7 +256,13 @@ def parse_args(args):
     PARSER.add_argument('--mirror-gfycat', default=False, action='store_true', required=False, help='Download available mirror in gfycat.com.')
     PARSER.add_argument('--filename-format', default='reddit',required=False, help='Specify filename format: reddit (default), title or url')
 
-    return PARSER.parse_args(args)
+    parsed_argument = PARSER.parse_args(args)
+    
+    if parsed_argument.sfw == True and parsed_argument.nsfw == True :
+        # negate both argument if both argument exist
+        parsed_argument = parsed_argument.nsfw = False
+
+    return parsed_argument
 
 def parse_reddit_argument(reddit_args):
     if '+' not in reddit_args :
