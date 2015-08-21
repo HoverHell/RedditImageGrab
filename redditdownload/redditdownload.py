@@ -9,8 +9,10 @@ from httplib import InvalidURL
 from argparse import ArgumentParser
 from os.path import exists as pathexists, join as pathjoin, basename as pathbasename, splitext as pathsplitext
 from os import mkdir, getcwd
-from reddit import getitems
 from HTMLParser import HTMLParser
+import time
+
+from reddit import getitems
 
 from gfycat import gfycat
 from fileinput import filename
@@ -296,6 +298,7 @@ if __name__ == "__main__":
 
     while not FINISHED:
         ITEMS = getitems(ARGS.reddit, ARGS.multireddit, LAST)
+        time.sleep(4)
         if not ITEMS:
             # No more items to process
             break
