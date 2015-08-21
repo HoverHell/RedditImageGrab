@@ -271,7 +271,7 @@ def parse_reddit_argument(reddit_args):
         return 'Downloading images from "%s" subreddit' % (reddit_args)
     elif len('Downloading images from "%s" subreddit' % (reddit_args)) > 80 :
         # other print format if the line is more than 80 chars
-        return 'Downloadning images from following subreddit:\n%s' % ('\n'.join(reddit_args.split('+')))
+        return 'Downloading images from following subreddit:\n%s' % ('\n'.join(reddit_args.split('+')))
     else :
         # print in one line but with nicer format
         return 'Downloading images from "%s" subreddit' % (', '.join(reddit_args.split('+')))

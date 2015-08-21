@@ -11,14 +11,14 @@ def getitems(subreddit, multireddit, previd=''):
     if multireddit:
         if not '/m/' in subreddit:
             warning = ('That doesn\'t look like a multireddit. Are you sure'
-                        'you need that -multireddit flag?')
+                        'you need that multireddit flag?')
             print warning
             sys.exit(1)
         url = 'http://www.reddit.com/user/%s.json' % subreddit
     if not multireddit:
         if '/m/' in subreddit:
             warning = ('It looks like you are trying to fetch a multireddit. \n'
-                       'Check the -multireddit flag. '
+                       'Check the multireddit flag. '
                        'Call --help for more info')
             print warning
             sys.exit(1)
