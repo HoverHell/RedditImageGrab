@@ -298,7 +298,20 @@ if __name__ == "__main__":
 
     while not FINISHED:
         ITEMS = getitems(ARGS.reddit, ARGS.multireddit, LAST)
-        time.sleep(4)
+        
+        # measure time and set the program to wait 4 second between request
+        # as per reddit api guidelines        
+        end_time = time.clock()
+        try : 
+            elapsed_time = end_time - start_time
+        except NameError: # if start_time not defined
+            elapsed_time = 4
+
+        if elapsed_time <= 4 :
+            time.sleep(4 - elapsed_time)
+        
+        start_time = time.clock()
+        
         if not ITEMS:
             # No more items to process
             break
