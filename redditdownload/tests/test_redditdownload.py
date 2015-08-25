@@ -20,3 +20,6 @@ class TestParseArgs(TestCase):
 		ARGS = parse_args(['--nsfw --sfw'])
 		self.assertFalse(ARGS.nsfw)
 		self.assertFalse(ARGS.sfw)
+		
+if __name__ == '__main__':
+    unittest.main()
