@@ -252,11 +252,14 @@ def parse_args(args):
     PARSER.add_argument('--update', default=False, action='store_true', required=False, help='Run until you encounter a file already downloaded.')
     PARSER.add_argument('--sfw', default=False, action='store_true', required=False, help='Download safe for work images only.')
     PARSER.add_argument('--nsfw', default=False, action='store_true', required=False, help='Download NSFW images only.')
+    PARSER.add_argument('--filename-format', default='reddit',required=False, help='Specify filename format: reddit (default), title or url')
+    PARSER.add_argument('--title-contain',metavar='TEXT', required=False, help='Download only if title contain text (case insensitive)')
     PARSER.add_argument('--regex', default=None, action='store', required=False, help='Use Python regex to filter based on title.')
     PARSER.add_argument('--verbose', default=False, action='store_true', required=False, help='Enable verbose output.')
     PARSER.add_argument('--skipAlbums', default=False, action='store_true', required=False, help='Skip all albums')
     PARSER.add_argument('--mirror-gfycat', default=False, action='store_true', required=False, help='Download available mirror in gfycat.com.')
-    PARSER.add_argument('--filename-format', default='reddit',required=False, help='Specify filename format: reddit (default), title or url')
+
+    # TODO fix if regex, title contain activated
 
     parsed_argument = PARSER.parse_args(args)
     
@@ -349,6 +352,13 @@ if __name__ == "__main__":
             elif ARGS.skipAlbums and 'imgur.com/a/' in ITEM['url']:
                 if ARGS.verbose:
                     print '    Album found, skipping %s' % (ITEM['id'])
+
+                SKIPPED += 1
+                continue
+
+            if ARGS.title_contain and ARGS.title_contain.lower() not in ITEM['title'].lower():
+                if ARGS.verbose:
+                    print '    Title not contain "{0}", skipping {1}'.format(ARGS.title_contain, ITEM['id'])
 
                 SKIPPED += 1
                 continue
