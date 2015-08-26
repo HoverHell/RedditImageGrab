@@ -7,7 +7,8 @@ import sys
 from urllib2 import urlopen, HTTPError, URLError
 from httplib import InvalidURL
 from argparse import ArgumentParser
-from os.path import exists as pathexists, join as pathjoin, basename as pathbasename, splitext as pathsplitext
+from os.path import exists as pathexists, join as pathjoin, basename as pathbasename
+from os.path import splitext as pathsplitext
 from os import mkdir, getcwd
 from HTMLParser import HTMLParser
 import time
@@ -15,7 +16,7 @@ import time
 from reddit import getitems
 
 from gfycat import gfycat
-from fileinput import filename
+
 
 # Used to extract src from Deviantart URLs
 class DeviantHTMLParser(HTMLParser):
@@ -28,11 +29,12 @@ class DeviantHTMLParser(HTMLParser):
     def __init__(self):
         self.reset()
         self.IMAGE = None
+
     # Handles HTML Elements eg <img src="//blank.jpg" class="picture"/> ->
     #      tag => "img", attrs => [("src", "//blank.jpg"), ("class", "picture")]
     def handle_starttag(self, tag, attrs):
         # Only interested in img when we dont have the url
-        if (tag == "a" or tag == "img") and self.IMAGE == None:
+        if (tag == "a" or tag == "img") and self.IMAGE is None:
             # Check attributes for class
             for classAttr in attrs:
                 # Check class is dev-content-normal
@@ -46,6 +48,8 @@ class DeviantHTMLParser(HTMLParser):
                         return
 
 _WRONGDATA_LOGFILE = '.wrong_type_pages.jsl'
+
+
 def _log_wrongtype(_logfile=_WRONGDATA_LOGFILE, **kwa):
     if not _logfile:
         return
@@ -139,7 +143,7 @@ def download_from_url(url, dest_file):
         filetype = 'unknown'
 
     # Only try to download acceptable image types
-    if not filetype in ['image/jpeg', 'image/png', 'image/gif','video/webm','video/mp4']:
+    if filetype not in ['image/jpeg', 'image/png', 'image/gif', 'video/webm', 'video/mp4']:
         raise WrongFileTypeException('WRONG FILE TYPE: %s has type: %s!' % (url, filetype))
 
     filedata = response.read()
@@ -166,13 +170,14 @@ def process_imgur_url(url):
         # Extract the file extension
         ext = pathsplitext(pathbasename(url))[1]
         if ext == '.gifv':
-            url = url.replace('.gifv','.gif')
+            url = url.replace('.gifv', '.gif')
         if not ext:
             # Append a default
             url += '.jpg'
     return [url]
 
-def  process_deviant_url(url):
+
+def process_deviant_url(url):
     """
     Given a DeviantArt URL, determine if it's a direct link to an image, or
     a standard DeviantArt Page. If the latter, attempt to acquire Direct link.
@@ -190,17 +195,18 @@ def  process_deviant_url(url):
         parser = DeviantHTMLParser()
         try:
             parser.feed(filedata)
-            if parser.IMAGE != None:
+            if parser.IMAGE is not None:
                 return [parser.IMAGE]
             return [url]
         # Exceptions thrown when non-ascii chars are found
-        except UnicodeDecodeError as ERROR:
-            if parser.IMAGE != None:
+        except UnicodeDecodeError:
+            if parser.IMAGE is not None:
                 return [parser.IMAGE]
             else:
                 return[url]
     # Dont return None!
     return [url]
+
 
 def extract_urls(url):
     """
@@ -217,16 +223,17 @@ def extract_urls(url):
     elif 'deviantart.com' in url:
         urls = process_deviant_url(url)
     elif 'gfycat.com' in url:
-        #choose the smallest file on gfycat
+        # choose the smallest file on gfycat
         gfycat_json = gfycat().more(url.split("gfycat.com/")[-1]).json()
         if gfycat_json["mp4Size"] < gfycat_json["webmSize"]:
             urls = [gfycat_json["mp4Url"]]
-        else :
+        else:
             urls = [gfycat_json["webmUrl"]]
     else:
         urls = [url]
 
     return urls
+
 
 def slugify(value):
     """
@@ -241,41 +248,60 @@ def slugify(value):
     # value = re.sub('[-\s]+', '-', value) # not replacing space with hypen
     return value
 
+
 def parse_args(args):
-    PARSER = ArgumentParser(description='Downloads files with specified extension from the specified subreddit.')
+    PARSER = ArgumentParser(description='Downloads files with specified extension'
+                            'from the specified subreddit.')
     PARSER.add_argument('reddit', metavar='<subreddit>', help='Subreddit name.')
-    PARSER.add_argument('dir', metavar='<dest_file>',nargs='?', default=getcwd(), help='Dir to put downloaded files in.')
-    PARSER.add_argument('--multireddit', default=False, action='store_true', required=False, help='Take multirredit instead of subreddit as input. If so, provide /user/m/multireddit-name as argument')
-    PARSER.add_argument('--last', metavar='l', default='', required=False, help='ID of the last downloaded file.')
-    PARSER.add_argument('--score', metavar='s', default=0, type=int, required=False, help='Minimum score of images to download.')
-    PARSER.add_argument('--num', metavar='n', default=5, type=int, required=False, help='Number of images to download.')
-    PARSER.add_argument('--update', default=False, action='store_true', required=False, help='Run until you encounter a file already downloaded.')
-    PARSER.add_argument('--sfw', default=False, action='store_true', required=False, help='Download safe for work images only.')
-    PARSER.add_argument('--nsfw', default=False, action='store_true', required=False, help='Download NSFW images only.')
-    PARSER.add_argument('--filename-format', default='reddit',required=False, help='Specify filename format: reddit (default), title or url')
-    PARSER.add_argument('--title-contain',metavar='TEXT', required=False, help='Download only if title contain text (case insensitive)')
-    PARSER.add_argument('--regex', default=None, action='store', required=False, help='Use Python regex to filter based on title.')
-    PARSER.add_argument('--verbose', default=False, action='store_true', required=False, help='Enable verbose output.')
-    PARSER.add_argument('--skipAlbums', default=False, action='store_true', required=False, help='Skip all albums')
-    PARSER.add_argument('--mirror-gfycat', default=False, action='store_true', required=False, help='Download available mirror in gfycat.com.')
+    PARSER.add_argument('dir', metavar='<dest_file>', nargs='?',
+                        default=getcwd(), help='Dir to put downloaded files in.')
+    PARSER.add_argument('--multireddit', default=False, action='store_true',
+                        required=False,
+                        help='Take multirredit instead of subreddit as input.'
+                        'If so, provide /user/m/multireddit-name as argument')
+    PARSER.add_argument('--last', metavar='l', default='', required=False,
+                        help='ID of the last downloaded file.')
+    PARSER.add_argument('--score', metavar='s', default=0, type=int, required=False,
+                        help='Minimum score of images to download.')
+    PARSER.add_argument('--num', metavar='n', default=5, type=int, required=False,
+                        help='Number of images to download.')
+    PARSER.add_argument('--update', default=False, action='store_true', required=False,
+                        help='Run until you encounter a file already downloaded.')
+    PARSER.add_argument('--sfw', default=False, action='store_true', required=False,
+                        help='Download safe for work images only.')
+    PARSER.add_argument('--nsfw', default=False, action='store_true', required=False,
+                        help='Download NSFW images only.')
+    PARSER.add_argument('--filename-format', default='reddit', required=False,
+                        help='Specify filename format: reddit (default), title or url')
+    PARSER.add_argument('--title-contain', metavar='TEXT', required=False,
+                        help='Download only if title contain text (case insensitive)')
+    PARSER.add_argument('--regex', default=None, action='store', required=False,
+                        help='Use Python regex to filter based on title.')
+    PARSER.add_argument('--verbose', default=False, action='store_true',
+                        required=False, help='Enable verbose output.')
+    PARSER.add_argument('--skipAlbums', default=False, action='store_true',
+                        required=False, help='Skip all albums')
+    PARSER.add_argument('--mirror-gfycat', default=False, action='store_true', required=False,
+                        help='Download available mirror in gfycat.com.')
 
     # TODO fix if regex, title contain activated
 
     parsed_argument = PARSER.parse_args(args)
-    
-    if parsed_argument.sfw == True and parsed_argument.nsfw == True :
+
+    if parsed_argument.sfw is True and parsed_argument.nsfw is True:
         # negate both argument if both argument exist
         parsed_argument = parsed_argument.nsfw = False
 
     return parsed_argument
 
+
 def parse_reddit_argument(reddit_args):
-    if '+' not in reddit_args :
+    if '+' not in reddit_args:
         return 'Downloading images from "%s" subreddit' % (reddit_args)
-    elif len('Downloading images from "%s" subreddit' % (reddit_args)) > 80 :
+    elif len('Downloading images from "%s" subreddit' % (reddit_args)) > 80:
         # other print format if the line is more than 80 chars
-        return 'Downloading images from following subreddit:\n%s' % ('\n'.join(reddit_args.split('+')))
-    else :
+        return 'Downloading images from subreddits:\n{}'.format('\n'.join(reddit_args.split('+')))
+    else:
         # print in one line but with nicer format
         return 'Downloading images from "%s" subreddit' % (', '.join(reddit_args.split('+')))
 
@@ -301,33 +327,34 @@ if __name__ == "__main__":
 
     while not FINISHED:
         ITEMS = getitems(ARGS.reddit, ARGS.multireddit, LAST)
-        
+
         # measure time and set the program to wait 4 second between request
-        # as per reddit api guidelines        
+        # as per reddit api guidelines
         end_time = time.clock()
-        try : 
-            elapsed_time = end_time - start_time
-        except NameError: # if start_time not defined
+        try:
+            elapsed_time = end_time - start_time  # @UndefinedVariable maybe
+        except NameError:  # if start_time not defined
             elapsed_time = 4
 
-        if elapsed_time <= 4 :
+        if elapsed_time <= 4:
             time.sleep(4 - elapsed_time)
-        
+
         start_time = time.clock()
-        
+
         if not ITEMS:
             # No more items to process
             break
 
         for ITEM in ITEMS:
             TOTAL += 1
-            
+
             if 'reddit.com/r/' + ARGS.reddit + '/comments/' in ITEM['url']:
                 continue
-            
+
             if ITEM['score'] < ARGS.score:
                 if ARGS.verbose:
-                    print '    SCORE: %s has score of %s which is lower than required score of %s.' % (ITEM['id'], ITEM['score'], ARGS.score)
+                    print '    SCORE: {} has score of {}'.format(ITEM['id'], ITEM['score'])
+                    'which is lower than required score of {}.'.format(ARGS.score)
 
                 SKIPPED += 1
                 continue
@@ -358,7 +385,8 @@ if __name__ == "__main__":
 
             if ARGS.title_contain and ARGS.title_contain.lower() not in ITEM['title'].lower():
                 if ARGS.verbose:
-                    print '    Title not contain "{0}", skipping {1}'.format(ARGS.title_contain, ITEM['id'])
+                    print '    Title not contain "{}",'.format(ARGS.title_contain)
+                    'skipping {}'.format(ITEM['id'])
 
                 SKIPPED += 1
                 continue
@@ -370,7 +398,7 @@ if __name__ == "__main__":
                     # Find gfycat if requested
                     if URL.endswith('gif') and ARGS.mirror_gfycat:
                         check = gfycat().check(URL)
-                        if check.get("urlKnown") :
+                        if check.get("urlKnown"):
                             URL = check.get('webmUrl')
 
                     # Trim any http query off end of file extension.
@@ -378,28 +406,29 @@ if __name__ == "__main__":
                     if '?' in FILEEXT:
                         FILEEXT = FILEEXT[:FILEEXT.index('?')]
 
-                    # Only append numbers if more than one file 
+                    # Only append numbers if more than one file
                     FILENUM = ('_%d' % FILECOUNT if len(URLS) > 1 else '')
 
                     # create filename based on given input from user
-                    if ARGS.filename_format == 'url' :
+                    if ARGS.filename_format == 'url':
                         FILENAME = '%s%s%s' % (pathsplitext(pathbasename(URL))[0], '', FILEEXT)
-                    elif ARGS.filename_format == 'title' :
+                    elif ARGS.filename_format == 'title':
                         FILENAME = '%s%s%s' % (slugify(ITEM['title']), FILENUM, FILEEXT)
-                        if len(FILENAME) >= 256 : 
+                        if len(FILENAME) >= 256:
                             shortened_item_title = slugify(ITEM['title'])[:256-len(FILENAME)]
                             FILENAME = '%s%s%s' % (shortened_item_title, FILENUM, FILEEXT)
                     else:
                         FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)
                     # join file with directory
                     FILEPATH = pathjoin(ARGS.dir, FILENAME)
- 
+
                     # Improve debuggability list URL before download too.
-                    print '    Attempting to download URL [%s] as [%s].' % (URL.encode('utf-8'), FILENAME.encode('utf-8'))
+                    print '    Attempting to download URL'
+                    '[{}] as [{}].'.format(URL.encode('utf-8'), FILENAME.encode('utf-8'))
 
                     # Download the image
                     download_from_url(URL, FILEPATH)
-                    
+
                     # Image downloaded successfully!
                     print '    Sucessfully downloaded URL [%s] as [%s].' % (URL, FILENAME)
                     DOWNLOADED += 1
@@ -411,8 +440,8 @@ if __name__ == "__main__":
                 except WrongFileTypeException as ERROR:
                     print '    %s' % (ERROR)
                     _log_wrongtype(url=URL, target_dir=ARGS.dir,
-                       _filecount=FILECOUNT, _downloaded=DOWNLOADED,
-                       _filename=FILENAME)
+                                   filecount=FILECOUNT, _downloaded=DOWNLOADED,
+                                   filename=FILENAME)
                     SKIPPED += 1
                 except FileExistsException as ERROR:
                     print '    %s' % (ERROR)
@@ -436,4 +465,5 @@ if __name__ == "__main__":
 
         LAST = ITEM['id']
 
-    print 'Downloaded %d files (Processed %d, Skipped %d, Exists %d)' % (DOWNLOADED, TOTAL, SKIPPED, ERRORS)
+    print 'Downloaded {} files'.format(DOWNLOADED)
+    '(Processed {}, Skipped {}, Exists {})'.format(TOTAL, SKIPPED, ERRORS)
