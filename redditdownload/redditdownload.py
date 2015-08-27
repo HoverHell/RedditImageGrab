@@ -34,7 +34,22 @@ class DeviantHTMLParser(HTMLParser):
     #      tag => "img", attrs => [("src", "//blank.jpg"), ("class", "picture")]
     def handle_starttag(self, tag, attrs):
         # Only interested in img when we dont have the url
-        if (tag == "a" or tag == "img") and self.IMAGE is None:
+        # first search for download button
+        if tag == "a" and self.IMAGE is None:
+            # filter the probably a-tag, or link-tag or download button
+            # download link class content of from a-tag class
+            download_link_class = 'dev-page-button dev-page-button-with-text dev-page-download'
+            # use the same method like below
+            for classAttr in attrs:
+                if classAttr[0] == "class":
+                    # Incase page doesnt have a download button
+                    if download_link_class in classAttr[1]:
+                        for srcAttr in attrs:
+                            if srcAttr[0] == "href":
+                                self.IMAGE = srcAttr[1]
+
+        # if download button not found get original image
+        elif (tag == "a" or tag == "img") and self.IMAGE is None:
             # Check attributes for class
             for classAttr in attrs:
                 # Check class is dev-content-normal
