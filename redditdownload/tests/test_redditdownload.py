@@ -5,7 +5,7 @@ import unittest
 from unittest import TestCase
 from os import getcwd
 
-from redditdownload import parse_args, process_deviant_url
+from redditdownload import parse_args, process_deviant_url, process_imgur_url
 
 
 class TestParseArgs(TestCase):
@@ -39,6 +39,26 @@ class TestProcessDeviantUrl(TestCase):
         self.assertIsInstance(result_url, list)
         self.assertIn(self.not_full_download_url, result_url[0])
         self.assertGreaterEqual(len(result_url), 1)
+
+
+class TestProcessImgurUrl(TestCase):
+    def setUp(self):
+        self.album_url = 'http://imgur.com/a/WobUS'
+        self.album_url_member = 'http://i.imgur.com/qVOLIba.jpg'
+
+        # single url with extension
+        self.single_url = 'https://i.imgur.com/XdWGz14.jpg'
+
+    def test_extract_album(self):
+        result = process_imgur_url(self.album_url)
+        self.assertIsInstance(result, list)
+        self.assertIn(self.album_url_member, result)
+
+    def test_extract_single(self):
+        result = process_imgur_url(self.single_url)
+        self.assertIsInstance(result, list)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(self.single_url, result)
 
 if __name__ == '__main__':
     unittest.main()
