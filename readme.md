@@ -64,3 +64,5 @@ Retrieve last 10 pics in the 'wallpaper' subreddit with the word
 "sunset" in the title (note: case is ignored by (?i) predicate)
 
     python redditdownload.py wallpaper sunsets --regex '(?i).*sunset.*' --num 10
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/rachmadaniHaryono/redditimagegrab/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
