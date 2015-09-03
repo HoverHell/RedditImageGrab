@@ -58,7 +58,7 @@ class TestProcessImgurUrl(TestCase):
         result = process_imgur_url(self.single_url)
         self.assertIsInstance(result, list)
         self.assertEqual(len(result), 1)
-        self.assertEqual(self.single_url, result)
+        self.assertIn(self.single_url, result)
 
 if __name__ == '__main__':
     unittest.main()
