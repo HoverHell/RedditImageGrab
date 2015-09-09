@@ -439,8 +439,12 @@ if __name__ == "__main__":
                     FILEPATH = pathjoin(ARGS.dir, FILENAME)
 
                     # Improve debuggability list URL before download too.
-                    text_templ = '    Attempting to download URL[{}] as [{}].'
-                    print text_templ.format(URL.encode('utf-8'), FILENAME.encode('utf-8'))
+                    # url may be wrong so skip that
+                    if URL.encode('utf-8') == 'http://':
+                        raise URLError
+                    else:
+                        text_templ = '    Attempting to download URL[{}] as [{}].'
+                        print text_templ.format(URL.encode('utf-8'), FILENAME.encode('utf-8'))
 
                     # Download the image
                     download_from_url(URL, FILEPATH)
