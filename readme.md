@@ -39,6 +39,7 @@ optional arguments:
     --filename-format FILENAME_FORMAT
                         Specify filename format: reddit (default), title or
                         url
+    --sort-type         Sort the subreddit.
 
 # Examples
 
@@ -64,5 +65,18 @@ Retrieve last 10 pics in the 'wallpaper' subreddit with the word
 "sunset" in the title (note: case is ignored by (?i) predicate)
 
     python redditdownload.py wallpaper sunsets --regex '(?i).*sunset.*' --num 10
+
+Download top week post from subreddit 'animegifs' and use gfycat gif mirror (if available)
+
+	python redditdownload.py animegifs --sort-type topweek --mirror-gfycat
+
+## Sorting
+
+Available sorting are following : hot, new, rising, controversial, top, gilded
+
+'top' and 'controversial' sorting can also be extended using available time limit extension (hour, day, week, month, year, all).
+
+example : tophour, topweek, topweek, controversialhour, controversialweek etc
+
 
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/rachmadaniHaryono/redditimagegrab/trend.png)](https://bitdeli.com/free "Bitdeli Badge")

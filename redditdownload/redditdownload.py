@@ -298,6 +298,7 @@ def parse_args(args):
                         required=False, help='Skip all albums')
     PARSER.add_argument('--mirror-gfycat', default=False, action='store_true', required=False,
                         help='Download available mirror in gfycat.com.')
+    PARSER.add_argument('--sort-type', default=None, help='Sort the subreddit.')
 
     # TODO fix if regex, title contain activated
 
@@ -341,7 +342,7 @@ if __name__ == "__main__":
     LAST = ARGS.last
 
     while not FINISHED:
-        ITEMS = getitems(ARGS.reddit, ARGS.multireddit, LAST)
+        ITEMS = getitems(ARGS.reddit, ARGS.multireddit, LAST, ARGS.sort_type)
 
         # measure time and set the program to wait 4 second between request
         # as per reddit api guidelines
