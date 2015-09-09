@@ -9,9 +9,9 @@ from json import JSONDecoder
 def getitems(subreddit, multireddit, previd=''):
     """Return list of items from a subreddit."""
     if multireddit:
-        if not '/m/' in subreddit:
+        if '/m/' not in subreddit:
             warning = ('That doesn\'t look like a multireddit. Are you sure'
-                        'you need that multireddit flag?')
+                       'you need that multireddit flag?')
             print warning
             sys.exit(1)
         url = 'http://www.reddit.com/user/%s.json' % subreddit
@@ -25,7 +25,7 @@ def getitems(subreddit, multireddit, previd=''):
         url = 'http://www.reddit.com/r/%s.json' % subreddit
     # Get items after item with 'id' of previd.
 
-    hdr = { 'User-Agent' : 'RedditImageGrab script.' }
+    hdr = {'User-Agent': 'RedditImageGrab script.'}
 
     if previd:
         url = '%s?after=t3_%s' % (url, previd)
