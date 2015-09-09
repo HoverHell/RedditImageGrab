@@ -6,8 +6,16 @@ from urllib2 import urlopen, Request, HTTPError
 from json import JSONDecoder
 
 
-def getitems(subreddit, multireddit, previd=''):
-    """Return list of items from a subreddit."""
+def getitems(subreddit, multireddit, previd='', reddit_sort=None):
+    """Return list of items from a subreddit.
+
+    :param subreddit: subreddit to load the post
+    :param multireddit: multireddit if given instead subreddit
+    :param previd: previous post id, to get more post
+    :param reddit_sort: type of sorting post
+    :returns: list -- list of post url
+    """
+
     if multireddit:
         if '/m/' not in subreddit:
             warning = ('That doesn\'t look like a multireddit. Are you sure'
@@ -22,13 +30,48 @@ def getitems(subreddit, multireddit, previd=''):
                        'Call --help for more info')
             print warning
             sys.exit(1)
-        url = 'http://www.reddit.com/r/%s.json' % subreddit
+        if reddit_sort is None:
+            url = 'http://www.reddit.com/r/{}.json'.format(subreddit)
+        else:
+            url = 'http://www.reddit.com/r/{}/{}.json'.format(subreddit, reddit_sort)
+
     # Get items after item with 'id' of previd.
 
     hdr = {'User-Agent': 'RedditImageGrab script.'}
 
+    # here where is query start
+    # query for previd comment
     if previd:
         url = '%s?after=t3_%s' % (url, previd)
+
+    # query for more advanced top and controversial sort
+    # available extension : hour, day, week, month, year, all
+    # ie tophour, topweek, topweek etc
+    # ie controversialhour, controversialweek etc
+
+    # check if reddit_sort is advanced sort
+    if reddit_sort == 'top' or reddit_sort == 'controversial':
+        # dont need another additional query
+        is_advanced_sort = False
+    elif 'top' in reddit_sort:
+        is_advanced_sort = True
+        sort_time_limit = reddit_sort[3:]
+        sort_type = 'top'
+    elif 'controversial' in reddit_sort:
+        is_advanced_sort = True
+        sort_time_limit = reddit_sort[13:]
+        sort_type = 'controversial'
+
+    # check if url have already query
+    if '?' in url.split('/')[-1] and is_advanced_sort:
+        url += '&'
+    else:  # url dont have query yet
+        url += '?'
+
+    # add advanced sort
+    if is_advanced_sort:
+        url += 'sort={}&t={}'.format(sort_type, sort_time_limit)
+
     try:
         req = Request(url, headers=hdr)
         json = urlopen(req).read()
