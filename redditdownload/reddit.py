@@ -30,8 +30,15 @@ def getitems(subreddit, multireddit, previd='', reddit_sort=None):
                        'Call --help for more info')
             print warning
             sys.exit(1)
+        # no sorting needed
         if reddit_sort is None:
             url = 'http://www.reddit.com/r/{}.json'.format(subreddit)
+        # if sort is top or controversial, may include advanced sort (ie week, all etc)
+        elif 'top' in reddit_sort:
+            url = 'http://www.reddit.com/r/{}/{}.json'.format(subreddit, 'top')
+        elif 'controversial' in reddit_sort:
+            url = 'http://www.reddit.com/r/{}/{}.json'.format(subreddit, 'controversial')
+        # use default
         else:
             url = 'http://www.reddit.com/r/{}/{}.json'.format(subreddit, reddit_sort)
 
@@ -79,13 +86,17 @@ def getitems(subreddit, multireddit, previd='', reddit_sort=None):
         data = JSONDecoder().decode(json)
         items = [x['data'] for x in data['data']['children']]
     except HTTPError as ERROR:
-        error_message = '\tHTTP ERROR: Code %s for %s.' % (ERROR.code, url)
+        error_message = '\tHTTP ERROR: Code %s for %s' % (ERROR.code, url)
         sys.exit(error_message)
     except ValueError as ERROR:
         if ERROR.args[0] == 'No JSON object could be decoded':
             error_message = 'ERROR: subreddit "%s" does not exist' % (subreddit)
             sys.exit(error_message)
         raise ERROR
+    except KeyboardInterrupt as ERROR:
+        error_message = '\tKeyboardInterrupt: url:{}.'.format(url)
+        sys.exit(error_message)
+
     return items
 
 if __name__ == "__main__":
