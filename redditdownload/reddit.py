@@ -50,27 +50,28 @@ def getitems(subreddit, multireddit, previd='', reddit_sort=None):
     # ie controversialhour, controversialweek etc
 
     # check if reddit_sort is advanced sort
-    if reddit_sort == 'top' or reddit_sort == 'controversial':
-        # dont need another additional query
-        is_advanced_sort = False
-    elif 'top' in reddit_sort:
-        is_advanced_sort = True
-        sort_time_limit = reddit_sort[3:]
-        sort_type = 'top'
-    elif 'controversial' in reddit_sort:
-        is_advanced_sort = True
-        sort_time_limit = reddit_sort[13:]
-        sort_type = 'controversial'
+    if reddit_sort is not None:
+        if reddit_sort == 'top' or reddit_sort == 'controversial':
+            # dont need another additional query
+            is_advanced_sort = False
+        elif 'top' in reddit_sort:
+            is_advanced_sort = True
+            sort_time_limit = reddit_sort[3:]
+            sort_type = 'top'
+        elif 'controversial' in reddit_sort:
+            is_advanced_sort = True
+            sort_time_limit = reddit_sort[13:]
+            sort_type = 'controversial'
 
-    # check if url have already query
-    if '?' in url.split('/')[-1] and is_advanced_sort:
-        url += '&'
-    else:  # url dont have query yet
-        url += '?'
+        # check if url have already query
+        if '?' in url.split('/')[-1] and is_advanced_sort:
+            url += '&'
+        else:  # url dont have query yet
+            url += '?'
 
-    # add advanced sort
-    if is_advanced_sort:
-        url += 'sort={}&t={}'.format(sort_type, sort_time_limit)
+        # add advanced sort
+        if is_advanced_sort:
+            url += 'sort={}&t={}'.format(sort_type, sort_time_limit)
 
     try:
         req = Request(url, headers=hdr)
