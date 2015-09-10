@@ -13,6 +13,8 @@ from os import mkdir, getcwd
 from HTMLParser import HTMLParser
 import time
 
+from bs4 import BeautifulSoup
+
 from reddit import getitems
 
 from gfycat import gfycat
@@ -178,6 +180,21 @@ def process_imgur_url(url):
     if 'imgur.com/a/' in url or 'imgur.com/gallery/' in url:
         return extract_imgur_album_urls(url)
 
+    # use beautifulsoup4 to find real link
+    # find vid url only
+    try:
+        html = urlopen(url).read()
+        soup = BeautifulSoup(html, 'lxml')
+        vid = soup.find('div', {'class': 'video-container'})
+        vid_type = 'video/webm'  # or 'video/mp4'
+        vid_url = vid.find('source', {'type': vid_type}).get('src')
+        if vid_url.startswith('//'):
+            vid_url = 'http:' + vid_url
+        return vid_url
+
+    except:
+        # do nothing for awhile
+        pass
     # Change .png to .jpg for imgur urls.
     if url.endswith('.png'):
         url = url.replace('.png', '.jpg')
