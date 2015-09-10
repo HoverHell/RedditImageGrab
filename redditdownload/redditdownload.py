@@ -339,6 +339,9 @@ if __name__ == "__main__":
     if ARGS.regex:
         RE_RULE = re.compile(ARGS.regex)
 
+    # compile reddit comment url to check if url is one of them
+    reddit_comment_regex = re.compile('.*reddit\.com\/r\/(.*?)\/comments')
+
     LAST = ARGS.last
 
     while not FINISHED:
@@ -364,7 +367,10 @@ if __name__ == "__main__":
         for ITEM in ITEMS:
             TOTAL += 1
 
-            if 'reddit.com/r/' + ARGS.reddit + '/comments/' in ITEM['url']:
+            # not downloading if url is reddit comment
+            if ('reddit.com/r/' + ARGS.reddit + '/comments/' in ITEM['url'] or
+               re.match(reddit_comment_regex, ITEM['url']) is not None):
+                print('    Skip:[{}]'.format(ITEM['url']))
                 continue
 
             if ITEM['score'] < ARGS.score:
