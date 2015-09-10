@@ -441,7 +441,7 @@ if __name__ == "__main__":
                     # Improve debuggability list URL before download too.
                     # url may be wrong so skip that
                     if URL.encode('utf-8') == 'http://':
-                        raise URLError
+                        raise URLError('Url is empty')
                     else:
                         text_templ = '    Attempting to download URL[{}] as [{}].'
                         print text_templ.format(URL.encode('utf-8'), FILENAME.encode('utf-8'))
