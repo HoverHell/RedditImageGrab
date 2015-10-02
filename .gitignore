@@ -5,3 +5,9 @@
 *.pyc
 .idea/
 
+/.project
+/*~
+/*.webm
+/build
+/.pydevproject
+/.pydevproject.bak

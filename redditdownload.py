@@ -7,7 +7,7 @@ from urllib2 import urlopen, HTTPError, URLError
 from httplib import InvalidURL
 from argparse import ArgumentParser
 from os.path import exists as pathexists, join as pathjoin, basename as pathbasename, splitext as pathsplitext
-from os import mkdir
+from os import mkdir, getcwd
 from reddit import getitems
 from HTMLParser import HTMLParser
 
@@ -231,7 +231,7 @@ def extract_urls(url):
 if __name__ == "__main__":
     PARSER = ArgumentParser(description='Downloads files with specified extension from the specified subreddit.')
     PARSER.add_argument('reddit', metavar='<subreddit>', help='Subreddit name.')
-    PARSER.add_argument('dir', metavar='<dest_file>', help='Dir to put downloaded files in.')
+    PARSER.add_argument('dir', metavar='<dest_file>',nargs='?', default=getcwd(), help='Dir to put downloaded files in.')
     PARSER.add_argument('-last', metavar='l', default='', required=False, help='ID of the last downloaded file.')
     PARSER.add_argument('-score', metavar='s', default=0, type=int, required=False, help='Minimum score of images to download.')
     PARSER.add_argument('-num', metavar='n', default=0, type=int, required=False, help='Number of images to download.')
