@@ -1,13 +1,14 @@
 */*.jpg
 *.swp
+*.bak
 *.DS_Store
 *.sh
 *.pyc
-.idea/
+/.idea
 
 /.project
 /*~
 /*.webm
+/gfycat
 /build
 /.pydevproject
-/.pydevproject.bak
