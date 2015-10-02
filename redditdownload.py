@@ -336,12 +336,16 @@ if __name__ == "__main__":
                     print '    Attempting to download URL [%s] as [%s].' % (URL.encode('utf-8'), FILENAME.encode('utf-8'))
 
                     # Download the image
-                    download_from_url(URL, FILEPATH)
+                    try:
+                        download_from_url(URL, FILEPATH)
+                        # Image downloaded successfully!
+                        print '    Sucessfully downloaded URL [%s] as [%s].' % (URL, FILENAME)
+                        DOWNLOADED += 1
+                        FILECOUNT += 1
 
-                    # Image downloaded successfully!
-                    print '    Sucessfully downloaded URL [%s] as [%s].' % (URL, FILENAME)
-                    DOWNLOADED += 1
-                    FILECOUNT += 1
+                    except Exception,e:
+                        print '    %s' % str(e)
+                        ERRORS += 1
 
                     if ARGS.num > 0 and DOWNLOADED >= ARGS.num:
                         FINISHED = True
