@@ -6,7 +6,7 @@ from urllib2 import urlopen, Request, HTTPError
 from json import JSONDecoder
 
 
-def getitems(subreddit, multireddit, previd=''):
+def getitems(subreddit, multireddit=False, previd=''):
     """Return list of items from a subreddit."""
     if multireddit:
         if not '/m/' in subreddit:

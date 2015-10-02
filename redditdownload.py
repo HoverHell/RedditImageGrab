@@ -277,7 +277,7 @@ if __name__ == "__main__":
     LAST = ARGS.last
 
     while not FINISHED:
-        ITEMS = getitems(ARGS.reddit, ARGS.multireddit, LAST)
+        ITEMS = getitems(ARGS.reddit, multireddit=ARGS.multireddit, LAST)
         if not ITEMS:
             # No more items to process
             break
@@ -332,11 +332,7 @@ if __name__ == "__main__":
                     else:
                         FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)
                     FILEPATH = pathjoin(ARGS.dir, FILENAME)
-<<<<<<< HEAD
-                                            
-=======
 
->>>>>>> 03f55c927bf9773ceb4ed8a06a693c25c0c5f61b
                     # Improve debuggability list URL before download too.
                     print '    Attempting to download URL [%s] as [%s].' % (URL.encode('utf-8'), FILENAME.encode('utf-8'))
 
