@@ -1,9 +1,11 @@
 #!/usr/bin/env python2
 """Download images from a reddit.com subreddit."""
 
+import os
 import re
 import StringIO
 import sys
+import logging
 from urllib2 import urlopen, HTTPError, URLError
 from httplib import InvalidURL
 from argparse import ArgumentParser
@@ -15,6 +17,9 @@ import time
 from HTMLParser import HTMLParser
 from .gfycat import gfycat
 from .reddit import getitems
+
+
+_log = logging.getLogger('redditdownload')
 
 
 def request(url, *ar, **kwa):
@@ -78,7 +83,9 @@ class DeviantHTMLParser(HTMLParser):
                     else:
                         return
 
-_WRONGDATA_LOGFILE = '.wrong_type_pages.jsl'
+
+# '.wrong_type_pages.jsl'
+_WRONGDATA_LOGFILE = os.environ.get('WRONGDATA_LOGFILE')
 
 
 def _log_wrongtype(_logfile=_WRONGDATA_LOGFILE, **kwa):
@@ -310,8 +317,8 @@ def parse_args(args):
                         help='ID of the last downloaded file.')
     PARSER.add_argument('--score', metavar='s', default=0, type=int, required=False,
                         help='Minimum score of images to download.')
-    PARSER.add_argument('--num', metavar='n', default=5, type=int, required=False,
-                        help='Number of images to download.')
+    PARSER.add_argument('--num', metavar='n', default=1000, type=int, required=False,
+                        help='Number of images to download. Set to 0 to disable the limit')
     PARSER.add_argument('--update', default=False, action='store_true', required=False,
                         help='Run until you encounter a file already downloaded.')
     PARSER.add_argument('--sfw', default=False, action='store_true', required=False,
@@ -354,9 +361,10 @@ def parse_reddit_argument(reddit_args):
         return 'Downloading images from "%s" subreddit' % (', '.join(reddit_args.split('+')))
 
 
-if __name__ == "__main__":
+def main():
     ARGS = parse_args(sys.argv[1:])
 
+    logging.basicConfig(level=logging.INFO)
     print parse_reddit_argument(ARGS.reddit)
 
     TOTAL = DOWNLOADED = ERRORS = SKIPPED = FAILED = 0
@@ -450,7 +458,11 @@ if __name__ == "__main__":
                 continue
 
             FILECOUNT = 0
-            URLS = extract_urls(ITEM['url'])
+            try:
+                URLS = extract_urls(ITEM['url'])
+            except Exception:
+                _log.exception("Failed to extract urls for %r", URLS)
+                continue
             for URL in URLS:
                 try:
                     # Find gfycat if requested
@@ -496,7 +508,7 @@ if __name__ == "__main__":
                     DOWNLOADED += 1
                     FILECOUNT += 1
 
-                    if ARGS.num > 0 and DOWNLOADED >= ARGS.num:
+                    if ARGS.num and DOWNLOADED >= ARGS.num:
                         FINISHED = True
                         break
                 except WrongFileTypeException as ERROR:
@@ -521,6 +533,9 @@ if __name__ == "__main__":
                 except InvalidURL as ERROR:
                     print '    Invalid URL: %s!' % (URL)
                     FAILED += 1
+                except Exception as exc:
+                    _log.exception("Problem with %r: %r", URL, exc)
+                    FAILED += 1
 
             if FINISHED:
                 break
@@ -529,3 +544,7 @@ if __name__ == "__main__":
 
     print 'Downloaded {} files'.format(DOWNLOADED)
     '(Processed {}, Skipped {}, Exists {})'.format(TOTAL, SKIPPED, ERRORS)
+
+
+if __name__ == "__main__":
+    main()
