@@ -11,7 +11,7 @@ from httplib import InvalidURL
 from argparse import ArgumentParser
 from os.path import (
     exists as pathexists, join as pathjoin, basename as pathbasename,
-    splitext as pathsplitext, basename as pathbasename)
+    splitext as pathsplitext)
 from os import mkdir, getcwd
 import time
 from HTMLParser import HTMLParser
