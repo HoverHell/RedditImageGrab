@@ -6,7 +6,7 @@ from urllib2 import urlopen, Request, HTTPError
 from json import JSONDecoder
 
 
-def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
+def getitems(subreddit, multireddit=False, user=False, previd='', reddit_sort=None):
     """Return list of items from a subreddit.
 
     :param subreddit: subreddit to load the post
@@ -16,14 +16,17 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
     :returns: list -- list of post url
     """
 
+    if user:
+        url = 'https://www.reddit.com/user/%s/submitted.json' % subreddit
+
     if multireddit:
         if '/m/' not in subreddit:
             warning = ('That doesn\'t look like a multireddit. Are you sure'
                        'you need that multireddit flag?')
             print warning
             sys.exit(1)
-        url = 'http://www.reddit.com/user/%s.json' % subreddit
-    if not multireddit:
+        url = 'https://www.reddit.com/user/%s.json' % subreddit
+    if not (multireddit or user):
         if '/m/' in subreddit:
             warning = ('It looks like you are trying to fetch a multireddit. \n'
                        'Check the multireddit flag. '
@@ -32,15 +35,15 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
             sys.exit(1)
         # no sorting needed
         if reddit_sort is None:
-            url = 'http://www.reddit.com/r/{}.json'.format(subreddit)
+            url = 'https://www.reddit.com/r/{}.json'.format(subreddit)
         # if sort is top or controversial, may include advanced sort (ie week, all etc)
         elif 'top' in reddit_sort:
-            url = 'http://www.reddit.com/r/{}/{}.json'.format(subreddit, 'top')
+            url = 'https://www.reddit.com/r/{}/{}.json'.format(subreddit, 'top')
         elif 'controversial' in reddit_sort:
-            url = 'http://www.reddit.com/r/{}/{}.json'.format(subreddit, 'controversial')
+            url = 'https://www.reddit.com/r/{}/{}.json'.format(subreddit, 'controversial')
         # use default
         else:
-            url = 'http://www.reddit.com/r/{}/{}.json'.format(subreddit, reddit_sort)
+            url = 'https://www.reddit.com/r/{}/{}.json'.format(subreddit, reddit_sort)
 
     # Get items after item with 'id' of previd.
 
