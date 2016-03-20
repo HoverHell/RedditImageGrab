@@ -24,7 +24,7 @@ See `./redditdl.py --help` for uptodate details.
 ordering = ('key', )
 
     redditdl.py [-h] [--multireddit] [--last l] [--score s] [--num n]
-                     [--update] [--sfw] [--nsfw]
+                     [--user] [--update] [--sfw] [--nsfw]
                      [--filename-format FILENAME_FORMAT] [--title-contain TEXT]
                      [--regex REGEX] [--verbose] [--skipAlbums]
                      [--mirror-gfycat] [--sort-type SORT_TYPE]
@@ -43,6 +43,8 @@ optional arguments:
     -h, --help            show this help message and exit
     --multireddit         Take multirredit instead of subreddit as input. If so,
                         provide /user/m/multireddit-name as argument
+    --user                Take user instead of subreddit as input.
+                        Please note that filters don't work with users yet.
     --last l              ID of the last downloaded file.
     --score s             Minimum score of images to download.
     --num n               Number of images to download.

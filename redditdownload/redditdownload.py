@@ -311,8 +311,11 @@ def parse_args(args):
                         default=getcwd(), help='Dir to put downloaded files in.')
     PARSER.add_argument('--multireddit', default=False, action='store_true',
                         required=False,
-                        help='Take multirredit instead of subreddit as input.'
+                        help='Take multireddit instead of subreddit as input.'
                         'If so, provide /user/m/multireddit-name as argument')
+    PARSER.add_argument('--user', default=False, action='store_true', required=False,
+                        help='Take user instead of subreddit as input. '
+                        'Please note that filters don\'t work with users yet.')
     PARSER.add_argument('--last', metavar='l', default='', required=False,
                         help='ID of the last downloaded file.')
     PARSER.add_argument('--score', metavar='s', default=0, type=int, required=False,
@@ -389,7 +392,7 @@ def main():
 
     while not FINISHED:
         ITEMS = getitems(
-            ARGS.reddit, multireddit=ARGS.multireddit, previd=LAST,
+            ARGS.reddit, multireddit=ARGS.multireddit, user=ARGS.user, previd=LAST,
             reddit_sort=ARGS.sort_type)
 
         # measure time and set the program to wait 4 second between request
