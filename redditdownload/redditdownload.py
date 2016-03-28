@@ -161,8 +161,9 @@ def download_from_url(url, dest_file):
     # Don't download files multiple times!
     if pathexists(dest_file):
         raise FileExistsException('URL [%s] already downloaded.' % url)
-    if '.jpg' in dest_file or '.jpeg' in dest_file:
-        if pathexists(dest_file.replace('.jpg', '.png')) or pathexists(dest_file.replace('.jpeg', '.png')):
+    elif ('.jpg' in dest_file or '.jpeg' in dest_file) and 'imgur.com' in url:
+        dest_file_ext = '.jpg' if '.jpg' in dest_file else '.jpeg'
+        if pathexists(dest_file.replace(dest_file_ext, '.png')):
             error_txt = 'URL [{}] may already downloaded with [png] extensions.'
             raise FileExistsException(error_txt.format(url))
 
@@ -531,7 +532,8 @@ def main():
                         print '    Sucessfully downloaded URL [%s] as [%s].' % (URL, FILENAME)
                         DOWNLOADED += 1
                         FILECOUNT += 1
-                        fix_image_ext(FILEPATH)
+                        if 'imgur.com' in URL:
+                            fix_image_ext(FILEPATH)
 
                     except Exception,e:
                         print '    %s' % str(e)
