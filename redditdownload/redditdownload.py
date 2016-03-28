@@ -6,6 +6,7 @@ import re
 import StringIO
 import sys
 import logging
+import imagehdr
 from urllib2 import urlopen, HTTPError, URLError
 from httplib import InvalidURL
 from argparse import ArgumentParser
@@ -189,6 +190,25 @@ def download_from_url(url, dest_file):
     filehandle.write(filedata)
     filehandle.close()
 
+
+def fix_image_ext(filename):
+    """fix image extension using python imghdr."""
+    logger = logging.getlogger(__name__)
+    new_filename = None
+    basename, file_ext = pathsplitext(filename)
+    ihdr_ext = imagehdr.what(filename)
+    if '.{}'.format(ihdr_ext) != file_ext and ihdr_ext is not None:
+        if ihdr_ext == 'jpeg' and file_ext in ['.jpeg', '.jpg']:
+            # don't do anything for jpg/jpeg file
+            pass
+        else:
+            new_filename = '{}.{}'.format(basename, ihdr_ext)
+    if new_filename is not None:
+        if pathexists(new_filename):
+            logger.debug('Can\'t fix file Extension, file already exist.')
+        else:
+            logger.info('Fix extension from [{}] to [{}]'.format(file_ext, ihdr_ext))
+            os.rename(filename, new_filename)
 
 def process_imgur_url(url):
     """
@@ -507,6 +527,7 @@ def main():
                         print '    Sucessfully downloaded URL [%s] as [%s].' % (URL, FILENAME)
                         DOWNLOADED += 1
                         FILECOUNT += 1
+                        fix_image_ext(FILEPATH)
 
                     except Exception,e:
                         print '    %s' % str(e)
