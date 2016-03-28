@@ -162,7 +162,7 @@ def download_from_url(url, dest_file):
     if pathexists(dest_file):
         raise FileExistsException('URL [%s] already downloaded.' % url)
     if '.jpg' in dest_file or '.jpeg' in dest_file:
-        if pathexists(dest_file.replace('.jpg', '.png')) or pathexists(dest_file('.jpeg', '.png')):
+        if pathexists(dest_file.replace('.jpg', '.png')) or pathexists(dest_file.replace('.jpeg', '.png')):
             error_txt = 'URL [{}] may already downloaded with [png] extensions.'
             raise FileExistsException(error_txt.format(url))
 
@@ -197,7 +197,7 @@ def download_from_url(url, dest_file):
 
 def fix_image_ext(filename):
     """fix image extension using python imghdr."""
-    logger = logging.getlogger(__name__)
+    logger = logging.getLogger(__name__)
     new_filename = None
     basename, file_ext = pathsplitext(filename)
     ihdr_ext = imghdr.what(filename)
