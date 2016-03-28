@@ -164,7 +164,7 @@ def download_from_url(url, dest_file):
     elif ('.jpg' in dest_file or '.jpeg' in dest_file) and 'imgur.com' in url:
         dest_file_ext = '.jpg' if '.jpg' in dest_file else '.jpeg'
         if pathexists(dest_file.replace(dest_file_ext, '.png')):
-            error_txt = 'URL [{}] may already downloaded with [png] extensions.'
+            error_txt = 'URL [{}] may already downloaded with [.png] extensions.'
             raise FileExistsException(error_txt.format(url))
 
     response = request(url)
