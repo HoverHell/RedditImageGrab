@@ -6,7 +6,7 @@ import re
 import StringIO
 import sys
 import logging
-import imagehdr
+import imghdr
 from urllib2 import urlopen, HTTPError, URLError
 from httplib import InvalidURL
 from argparse import ArgumentParser
@@ -161,6 +161,10 @@ def download_from_url(url, dest_file):
     # Don't download files multiple times!
     if pathexists(dest_file):
         raise FileExistsException('URL [%s] already downloaded.' % url)
+    if '.jpg' in dest_file or '.jpeg' in dest_file:
+        if pathexists(dest_file.replace('.jpg', '.png')) or pathexists(dest_file('.jpeg', '.png')):
+            error_txt = 'URL [{}] may already downloaded with [png] extensions.'
+            raise FileExistsException(error_txt.format(url))
 
     response = request(url)
     info = response.info()
@@ -196,7 +200,7 @@ def fix_image_ext(filename):
     logger = logging.getlogger(__name__)
     new_filename = None
     basename, file_ext = pathsplitext(filename)
-    ihdr_ext = imagehdr.what(filename)
+    ihdr_ext = imghdr.what(filename)
     if '.{}'.format(ihdr_ext) != file_ext and ihdr_ext is not None:
         if ihdr_ext == 'jpeg' and file_ext in ['.jpeg', '.jpg']:
             # don't do anything for jpg/jpeg file
