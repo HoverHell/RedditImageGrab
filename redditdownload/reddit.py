@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Return list of items from a sub-reddit of reddit.com."""
 
+import logging
 import sys
 from urllib2 import urlopen, Request, HTTPError
 from json import JSONDecoder
@@ -16,6 +17,7 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
     :returns: list -- list of post url
     """
     # assume no advanced sorting.
+    logger = logging.getLogger(__name__)
     is_advanced_sort = False
 
     if multireddit:
@@ -75,6 +77,8 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
         # check if url have already query
         if '?' in url.split('/')[-1] and is_advanced_sort:
             url += '&'
+        elif not is_advanced_sort:
+            pass  # fix '?' on simple sort
         else:  # url dont have query yet
             url += '?'
 
@@ -83,6 +87,7 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
             url += 'sort={}&t={}'.format(sort_type, sort_time_limit)
 
     try:
+        logger.debug('url[{}]'.format(url))
         req = Request(url, headers=hdr)
         json = urlopen(req).read()
         data = JSONDecoder().decode(json)
