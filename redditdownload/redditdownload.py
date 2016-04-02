@@ -217,6 +217,12 @@ def process_imgur_url(url):
     except Exception:
         # do nothing for awhile
         pass
+    # fix for reddit group on imgur
+    # e.g.:[http://imgur.com/r/Megumin/iIhVfYP]
+    if 'imgur.com/r/' in url:
+        image_parts = url.split('.com/r/')
+        image_parts[1] = image_parts[1].split('/')[1]
+        url = '.com/'.join(image_parts)
     # Change .png to .jpg for imgur urls.
     if url.endswith('.png'):
         url = url.replace('.png', '.jpg')
