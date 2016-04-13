@@ -121,9 +121,7 @@ def extract_imgur_album_urls(album_url):
         return []
 
     filedata = response.read()
-
-    match = re.compile(r'\"hash\":\"(.[^\"]*)\"')
-
+    match = re.compile(r'\"hash\":\"(.[^\"]*)\",\"title\"')
     items = []
 
     memfile = StringIO.StringIO(filedata)
