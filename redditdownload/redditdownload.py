@@ -387,10 +387,14 @@ def main():
     start_time = None
     ITEM = None
 
+    sort_type = ARGS.sort_type
+    if sort_type:
+        sort_type = sort_type.lower()
+
     while not FINISHED:
         ITEMS = getitems(
             ARGS.reddit, multireddit=ARGS.multireddit, previd=LAST,
-            reddit_sort=ARGS.sort_type)
+            reddit_sort=sort_type)
 
         # measure time and set the program to wait 4 second between request
         # as per reddit api guidelines

@@ -57,6 +57,7 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
     # ie controversialhour, controversialweek etc
 
     # check if reddit_sort is advanced sort
+    is_advanced_sort = False
     if reddit_sort is not None:
         if reddit_sort == 'top' or reddit_sort == 'controversial':
             # dont need another additional query
