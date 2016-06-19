@@ -3,18 +3,19 @@
 
 import os
 import re
-import StringIO
+import io
 import sys
 import logging
-from urllib2 import urlopen, HTTPError, URLError
-from httplib import InvalidURL
+from urllib.request import urlopen
+from urllib.error import HTTPError, URLError
+from http.client import InvalidURL
 from argparse import ArgumentParser
 from os.path import (
     exists as pathexists, join as pathjoin, basename as pathbasename,
     splitext as pathsplitext)
 from os import mkdir, getcwd
 import time
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 from .gfycat import gfycat
 from .reddit import getitems
 
@@ -26,14 +27,14 @@ def request(url, *ar, **kwa):
     _retries = kwa.pop('_retries', 4)
     _retry_pause = kwa.pop('_retry_pause', 0)
     res = None
-    for _try in xrange(_retries):
+    for _try in range(_retries):
         try:
             res = urlopen(url, *ar, **kwa)
         except Exception as exc:
             if _try == _retries - 1:
                 raise
-            print "Try %r err %r  (%r)" % (
-                _try, exc, url)
+            print("Try %r err %r  (%r)" % (
+                _try, exc, url))
         else:
             break
     return res
@@ -126,7 +127,7 @@ def extract_imgur_album_urls(album_url):
 
     items = []
 
-    memfile = StringIO.StringIO(filedata)
+    memfile = io.StringIO(filedata)
 
     for line in memfile.readlines():
         results = re.findall(match, line)
@@ -165,7 +166,7 @@ def download_from_url(url, dest_file):
     info = response.info()
 
     # Work out file type either from the response or the url.
-    if 'content-type' in info.keys():
+    if 'content-type' in list(info.keys()):
         filetype = info['content-type']
     elif url.endswith('.jpg') or url.endswith('.jpeg'):
         filetype = 'image/jpeg'
@@ -298,7 +299,7 @@ def slugify(value):
     # with some modification
     import unicodedata
     value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
-    value = unicode(re.sub(r'[^\w\s-]', '', value).strip())
+    value = str(re.sub(r'[^\w\s-]', '', value).strip())
     # value = re.sub(r'[-\s]+', '-', value) # not replacing space with hypen
     return value
 
@@ -365,7 +366,7 @@ def main():
     ARGS = parse_args(sys.argv[1:])
 
     logging.basicConfig(level=logging.INFO)
-    print parse_reddit_argument(ARGS.reddit)
+    print(parse_reddit_argument(ARGS.reddit))
 
     TOTAL = DOWNLOADED = ERRORS = SKIPPED = FAILED = 0
     FINISHED = False
@@ -418,44 +419,44 @@ def main():
             # not downloading if url is reddit comment
             if ('reddit.com/r/' + ARGS.reddit + '/comments/' in ITEM['url'] or
                     re.match(reddit_comment_regex, ITEM['url']) is not None):
-                print '    Skip:[{}]'.format(ITEM['url'])
+                print('    Skip:[{}]'.format(ITEM['url']))
                 continue
 
             if ITEM['score'] < ARGS.score:
                 if ARGS.verbose:
-                    print '    SCORE: {} has score of {}'.format(ITEM['id'], ITEM['score'])
+                    print('    SCORE: {} has score of {}'.format(ITEM['id'], ITEM['score']))
                     'which is lower than required score of {}.'.format(ARGS.score)
 
                 SKIPPED += 1
                 continue
             elif ARGS.sfw and ITEM['over_18']:
                 if ARGS.verbose:
-                    print '    NSFW: %s is marked as NSFW.' % (ITEM['id'])
+                    print('    NSFW: %s is marked as NSFW.' % (ITEM['id']))
 
                 SKIPPED += 1
                 continue
             elif ARGS.nsfw and not ITEM['over_18']:
                 if ARGS.verbose:
-                    print '    Not NSFW, skipping %s' % (ITEM['id'])
+                    print('    Not NSFW, skipping %s' % (ITEM['id']))
 
                 SKIPPED += 1
                 continue
             elif ARGS.regex and not re.match(RE_RULE, ITEM['title']):
                 if ARGS.verbose:
-                    print '    Regex match failed'
+                    print('    Regex match failed')
 
                 SKIPPED += 1
                 continue
             elif ARGS.skipAlbums and 'imgur.com/a/' in ITEM['url']:
                 if ARGS.verbose:
-                    print '    Album found, skipping %s' % (ITEM['id'])
+                    print('    Album found, skipping %s' % (ITEM['id']))
 
                 SKIPPED += 1
                 continue
 
             if ARGS.title_contain and ARGS.title_contain.lower() not in ITEM['title'].lower():
                 if ARGS.verbose:
-                    print '    Title not contain "{}",'.format(ARGS.title_contain)
+                    print('    Title not contain "{}",'.format(ARGS.title_contain))
                     'skipping {}'.format(ITEM['id'])
 
                 SKIPPED += 1
@@ -502,44 +503,44 @@ def main():
                         raise URLError('Url is empty')
                     else:
                         text_templ = '    Attempting to download URL[{}] as [{}].'
-                        print text_templ.format(URL.encode('utf-8'), FILENAME.encode('utf-8'))
+                        print(text_templ.format(URL.encode('utf-8'), FILENAME.encode('utf-8')))
 
                     # Download the image
                     try:
                         download_from_url(URL, FILEPATH)
                         # Image downloaded successfully!
-                        print '    Sucessfully downloaded URL [%s] as [%s].' % (URL, FILENAME)
+                        print('    Sucessfully downloaded URL [%s] as [%s].' % (URL, FILENAME))
                         DOWNLOADED += 1
                         FILECOUNT += 1
 
-                    except Exception,e:
-                        print '    %s' % str(e)
+                    except Exception as e:
+                        print('    %s' % str(e))
                         ERRORS += 1
 
                     if ARGS.num and DOWNLOADED >= ARGS.num:
                         FINISHED = True
                         break
                 except WrongFileTypeException as ERROR:
-                    print '    %s' % (ERROR)
+                    print('    %s' % (ERROR))
                     _log_wrongtype(url=URL, target_dir=ARGS.dir,
                                    filecount=FILECOUNT, _downloaded=DOWNLOADED,
                                    filename=FILENAME)
                     SKIPPED += 1
                 except FileExistsException as ERROR:
-                    print '    %s' % (ERROR)
+                    print('    %s' % (ERROR))
                     ERRORS += 1
                     if ARGS.update:
-                        print '    Update complete, exiting.'
+                        print('    Update complete, exiting.')
                         FINISHED = True
                         break
                 except HTTPError as ERROR:
-                    print '    HTTP ERROR: Code %s for %s.' % (ERROR.code, URL)
+                    print('    HTTP ERROR: Code %s for %s.' % (ERROR.code, URL))
                     FAILED += 1
                 except URLError as ERROR:
-                    print '    URL ERROR: %s!' % (URL)
+                    print('    URL ERROR: %s!' % (URL))
                     FAILED += 1
                 except InvalidURL as ERROR:
-                    print '    Invalid URL: %s!' % (URL)
+                    print('    Invalid URL: %s!' % (URL))
                     FAILED += 1
                 except Exception as exc:
                     _log.exception("Problem with %r: %r", URL, exc)
@@ -550,7 +551,7 @@ def main():
 
         LAST = ITEM['id'] if ITEM is not None else None
 
-    print 'Downloaded {} files'.format(DOWNLOADED)
+    print('Downloaded {} files'.format(DOWNLOADED))
     '(Processed {}, Skipped {}, Exists {})'.format(TOTAL, SKIPPED, ERRORS)
 
 

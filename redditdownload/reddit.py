@@ -2,7 +2,8 @@
 """Return list of items from a sub-reddit of reddit.com."""
 
 import sys
-from urllib2 import urlopen, Request, HTTPError
+from urllib.request import urlopen, Request
+from urllib.error import HTTPError
 from json import JSONDecoder
 
 
@@ -20,7 +21,7 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
         if '/m/' not in subreddit:
             warning = ('That doesn\'t look like a multireddit. Are you sure'
                        'you need that multireddit flag?')
-            print warning
+            print(warning)
             sys.exit(1)
         url = 'http://www.reddit.com/user/%s.json' % subreddit
     if not multireddit:
@@ -28,7 +29,7 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
             warning = ('It looks like you are trying to fetch a multireddit. \n'
                        'Check the multireddit flag. '
                        'Call --help for more info')
-            print warning
+            print(warning)
             sys.exit(1)
         # no sorting needed
         if reddit_sort is None:
@@ -102,12 +103,12 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
 
 if __name__ == "__main__":
 
-    print 'Recent items for Python.'
+    print('Recent items for Python.')
     ITEMS = getitems('python')
     for ITEM in ITEMS:
-        print '\t%s - %s' % (ITEM['title'], ITEM['url'])
+        print('\t%s - %s' % (ITEM['title'], ITEM['url']))
 
-    print 'Previous items for Python.'
+    print('Previous items for Python.')
     OLDITEMS = getitems('python', ITEMS[-1]['id'])
     for ITEM in OLDITEMS:
-        print '\t%s - %s' % (ITEM['title'], ITEM['url'])
+        print('\t%s - %s' % (ITEM['title'], ITEM['url']))
