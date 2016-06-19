@@ -362,8 +362,8 @@ def parse_reddit_argument(reddit_args):
         return 'Downloading images from "%s" subreddit' % (', '.join(reddit_args.split('+')))
 
 
-def main():
-    ARGS = parse_args(sys.argv[1:])
+def main(args):
+    ARGS = parse_args(args if len(args)>0 else sys.argv[1:])
 
     logging.basicConfig(level=logging.INFO)
     print(parse_reddit_argument(ARGS.reddit))
@@ -556,4 +556,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main("")

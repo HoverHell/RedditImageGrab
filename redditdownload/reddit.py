@@ -84,7 +84,7 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
 
     try:
         req = Request(url, headers=hdr)
-        json = urlopen(req).read()
+        json = urlopen(req).read().decode("utf-8")
         data = JSONDecoder().decode(json)
         items = [x['data'] for x in data['data']['children']]
     except HTTPError as ERROR:
