@@ -33,8 +33,6 @@ def request(url, *ar, **kwa):
         except Exception as exc:
             if _try == _retries - 1:
                 raise
-            print("Try %r err %r  (%r)" % (
-                _try, exc, url))
         else:
             break
     return res
@@ -127,7 +125,10 @@ def extract_imgur_album_urls(album_url):
 
     items = []
 
-    memfile = io.StringIO(filedata)
+    try:
+        memfile = io.StringIO(filedata)
+    except:
+        memfile = None
 
     for line in memfile.readlines():
         results = re.findall(match, line)
@@ -364,9 +365,9 @@ def parse_reddit_argument(reddit_args):
 
 def main(args):
     ARGS = parse_args(args if len(args)>0 else sys.argv[1:])
+    ARGS.verbose = False
 
     logging.basicConfig(level=logging.INFO)
-    print(parse_reddit_argument(ARGS.reddit))
 
     TOTAL = DOWNLOADED = ERRORS = SKIPPED = FAILED = 0
     FINISHED = False
@@ -419,7 +420,6 @@ def main(args):
             # not downloading if url is reddit comment
             if ('reddit.com/r/' + ARGS.reddit + '/comments/' in ITEM['url'] or
                     re.match(reddit_comment_regex, ITEM['url']) is not None):
-                print('    Skip:[{}]'.format(ITEM['url']))
                 continue
 
             if ITEM['score'] < ARGS.score:
@@ -501,49 +501,38 @@ def main(args):
                     # url may be wrong so skip that
                     if URL.encode('utf-8') == 'http://':
                         raise URLError('Url is empty')
-                    else:
-                        text_templ = '    Attempting to download URL[{}] as [{}].'
-                        print(text_templ.format(URL.encode('utf-8'), FILENAME.encode('utf-8')))
 
                     # Download the image
                     try:
                         download_from_url(URL, FILEPATH)
                         # Image downloaded successfully!
-                        print('    Sucessfully downloaded URL [%s] as [%s].' % (URL, FILENAME))
                         DOWNLOADED += 1
                         FILECOUNT += 1
 
                     except Exception as e:
-                        print('    %s' % str(e))
                         ERRORS += 1
 
                     if ARGS.num and DOWNLOADED >= ARGS.num:
                         FINISHED = True
                         break
                 except WrongFileTypeException as ERROR:
-                    print('    %s' % (ERROR))
                     _log_wrongtype(url=URL, target_dir=ARGS.dir,
                                    filecount=FILECOUNT, _downloaded=DOWNLOADED,
                                    filename=FILENAME)
                     SKIPPED += 1
                 except FileExistsException as ERROR:
-                    print('    %s' % (ERROR))
                     ERRORS += 1
                     if ARGS.update:
                         print('    Update complete, exiting.')
                         FINISHED = True
                         break
                 except HTTPError as ERROR:
-                    print('    HTTP ERROR: Code %s for %s.' % (ERROR.code, URL))
                     FAILED += 1
                 except URLError as ERROR:
-                    print('    URL ERROR: %s!' % (URL))
                     FAILED += 1
                 except InvalidURL as ERROR:
-                    print('    Invalid URL: %s!' % (URL))
                     FAILED += 1
                 except Exception as exc:
-                    _log.exception("Problem with %r: %r", URL, exc)
                     FAILED += 1
 
             if FINISHED:
@@ -551,8 +540,10 @@ def main(args):
 
         LAST = ITEM['id'] if ITEM is not None else None
 
-    print('Downloaded {} files'.format(DOWNLOADED))
-    '(Processed {}, Skipped {}, Exists {})'.format(TOTAL, SKIPPED, ERRORS)
+    #print('Downloaded {} files'.format(DOWNLOADED))
+    #'(Processed {}, Skipped {}, Exists {})'.format(TOTAL, SKIPPED, ERRORS)
+
+    return DOWNLOADED
 
 
 if __name__ == "__main__":
