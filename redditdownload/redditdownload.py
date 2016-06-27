@@ -548,7 +548,7 @@ def main():
             if FINISHED:
                 break
 
-        LAST = ITEM['id'] if ITEM is not None else None
+        LAST = ITEMS[-1]['id'] if ITEMS[-1] is not None else None
 
     print 'Downloaded {} files'.format(DOWNLOADED)
     '(Processed {}, Skipped {}, Exists {})'.format(TOTAL, SKIPPED, ERRORS)
