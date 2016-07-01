@@ -33,7 +33,7 @@ class gfycat(object):
         except urllib.error.HTTPError as err:
             raise ValueError(err.read())
         result = namedtuple("result", "raw json")
-        return result(raw=connection, json=json.loads(connection))
+        return result(raw=connection, json=json.loads(connection.decode('ascii')))
 
     def upload(self, param):
         import random
