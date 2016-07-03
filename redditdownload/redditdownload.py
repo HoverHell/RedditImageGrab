@@ -130,6 +130,9 @@ def extract_imgur_album_urls(album_url):
     except:
         memfile = None
 
+    if memfile == None:
+    	return []
+
     for line in memfile.readlines():
         results = re.findall(match, line)
         if not results:
