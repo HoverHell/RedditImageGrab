@@ -1,4 +1,7 @@
 */*.jpg
+*/*.png
+*/*.webm
+*/*.mp4
 *.swp
 *.bak
 *.DS_Store

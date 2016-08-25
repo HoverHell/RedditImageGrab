@@ -82,6 +82,7 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
         if is_advanced_sort:
             url += 'sort={}&t={}'.format(sort_type, sort_time_limit)
 
+
     try:
         req = Request(url, headers=hdr)
         json = urlopen(req).read().decode("utf-8")
