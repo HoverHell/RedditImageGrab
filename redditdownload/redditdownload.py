@@ -18,6 +18,10 @@ import time
 from html.parser import HTMLParser
 from .gfycat import gfycat
 from .reddit import getitems
+sys.path.append(os.path.join(os.path.dirname(__file__), 'imgur-album-downloader'))
+#from imgur-album-downloaders.imguralbum import ImgurAlbumDownloader
+from imguralbum import ImgurAlbumDownloader
+#import imguralbum 
 
 
 _log = logging.getLogger('redditdownload')
@@ -292,7 +296,33 @@ def extract_urls(url):
         urls = [url]
 
     return urls
+    
+def extract_urls2(url):
+    """
+    Same as extract_urls(...), but allows any gallery, album, single, or direct
+    imgur image url to be returned since jtara1/imgur-album-downloader used
+    Returns:
+        list of vid/img urls
+    """
+    urls = []
 
+    if 'imgur.com' in url:
+        urls = [url]
+#        urls = process_imgur_url(url)        
+    elif 'deviantart.com' in url:
+        urls = process_deviant_url(url)
+    elif 'gfycat.com' in url:
+        # choose the smallest file on gfycat
+        gfycat_json = gfycat().more(url.split("gfycat.com/")[-1]).json()
+        if gfycat_json["mp4Size"] < gfycat_json["webmSize"]:
+            urls = [gfycat_json["mp4Url"]]
+        else:
+            urls = [gfycat_json["webmUrl"]]
+    else:
+        urls = [url]
+
+    return urls
+    
 
 def slugify(value):
     """
@@ -507,7 +537,10 @@ def main(args):
 
                     # Download the image
                     try:
-                        download_from_url(URL, FILEPATH)
+                        if 'imgur.com' in URL:
+                            ImgurAlbumDownloader(URL, ARGS.dir).save_images()
+                        else:
+                            download_from_url(URL, FILEPATH)
                         # Image downloaded successfully!
                         DOWNLOADED += 1
                         FILECOUNT += 1

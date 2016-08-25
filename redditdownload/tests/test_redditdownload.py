@@ -3,8 +3,10 @@
 
 import unittest
 from unittest import TestCase
+import os, sys
 from os import getcwd
-
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# import ../db.py
 from redditdownload import parse_args, process_deviant_url, process_imgur_url
 
 
