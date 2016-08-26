@@ -8,11 +8,22 @@ fresh and interesting. The main idea is that the script would download
 any JPEG or PNG formatted image that it found listed in the specified
 subreddit and download them to a folder.
 
+# jtara1 Fork
+
+### Features and Changes:
+
+* Adapted to Python 3 by merge from [ohyou/RedditImageGrab](https://github.com/ohyou/RedditImageGrab)
+
+* \-\-num cli argument now counts by reddit submission rather than individual image
+
+* added my fork (jtara1/imgur-album-download) to handle all imgur downloads (making the above feature possible)
+
+* fixed slugify function in redditdownload.py (which fixed --filename-format cli argument)
+
 
 # Requirements:
 
- * Python 2 (Python3 might be supported over 2to3, but see for
-   yourself and report back).
+ * Python 3
  * Optional requirements: listed in setup.py under extras_require.
 
 

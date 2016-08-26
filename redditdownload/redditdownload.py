@@ -308,7 +308,16 @@ def slugify(value):
     value = str(re.sub(r'[^\w\s-]', '', value.decode('ascii')).strip())
     # value = re.sub(r'[-\s]+', '-', value) # not replacing space with hypen
     return value
-
+    
+def remove_file_extension(mystr):
+    """ Removes file extension at the end of mystr parameter """
+    exts = ['.png', '.jpg', '.jpeg', '.jfif', '.gif', '.bmp', '.tif', '.mp4', 'webm', '.tiff', '.webp', '.bpg', '.bat', 
+            '.heif', '.exif', '.ppm', '.cgm', '.svg']
+    for ext in exts:
+        index = mystr.rfind(ext)
+        if index != -1:
+            return mystr[:index]
+    return mystr
 
 def parse_args(args):
     PARSER = ArgumentParser(description='Downloads files with specified extension'
@@ -512,7 +521,7 @@ def main(args):
                     # Download the image
                     try:
                         if 'imgur.com' in URL:
-                            ImgurAlbumDownloader(URL, ARGS.dir).save_images()
+                            ImgurAlbumDownloader(URL, ARGS.dir, remove_file_extension(FILENAME)).save_images()
                         else:
                             download_from_url(URL, FILEPATH)
                         # Image downloaded successfully!
