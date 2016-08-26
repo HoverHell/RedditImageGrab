@@ -276,9 +276,9 @@ def extract_urls(url):
 
     Returns:
         list of image urls.
-    """
+    """   
     urls = []
-
+    
     if 'imgur.com' in url:
         urls = [url]
     elif 'deviantart.com' in url:
@@ -305,7 +305,7 @@ def slugify(value):
     # with some modification
     import unicodedata
     value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
-    value = str(re.sub(r'[^\w\s-]', '', value).strip())
+    value = str(re.sub(r'[^\w\s-]', '', value.decode('ascii')).strip())
     # value = re.sub(r'[-\s]+', '-', value) # not replacing space with hypen
     return value
 
@@ -418,7 +418,7 @@ def main(args):
         if not ITEMS:
             # No more items to process
             break
-
+        
         for ITEM in ITEMS:
             TOTAL += 1
 
@@ -494,11 +494,13 @@ def main(args):
                         FILENAME = '%s%s%s' % (pathsplitext(pathbasename(URL))[0], '', FILEEXT)
                     elif ARGS.filename_format == 'title':
                         FILENAME = '%s%s%s' % (slugify(ITEM['title']), FILENUM, FILEEXT)
+                        
                         if len(FILENAME) >= 256:
                             shortened_item_title = slugify(ITEM['title'])[:256-len(FILENAME)]
                             FILENAME = '%s%s%s' % (shortened_item_title, FILENUM, FILEEXT)
                     else:
-                        FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)
+                        FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)                 
+                    
                     # join file with directory
                     FILEPATH = pathjoin(ARGS.dir, FILENAME)
 
@@ -548,8 +550,8 @@ def main(args):
 
         LAST = ITEM['id'] if ITEM is not None else None
 
-    #print('Downloaded {} files'.format(DOWNLOADED))
-    #'(Processed {}, Skipped {}, Exists {})'.format(TOTAL, SKIPPED, ERRORS)
+#    print('Downloaded {} files'.format(DOWNLOADED))
+#    '(Processed {}, Skipped {}, Exists {})'.format(TOTAL, SKIPPED, ERRORS)
 
     return DOWNLOADED
 
