@@ -18,8 +18,8 @@ import time
 from html.parser import HTMLParser
 from .gfycat import gfycat
 from .reddit import getitems
-sys.path.append(os.path.join(os.path.dirname(__file__), 'imgur-album-downloader'))
-from imguralbum import ImgurAlbumDownloader
+sys.path.append(os.path.join(os.path.dirname(__file__), 'imgur-downloader'))
+from imguralbum import ImgurDownloader
 
 
 _log = logging.getLogger('redditdownload')
@@ -51,6 +51,7 @@ class DeviantHTMLParser(HTMLParser):
     def __init__(self):
         self.reset()
         self.IMAGE = None
+        self.convert_charrefs = True
 
     # Handles HTML Elements eg <img src="//blank.jpg" class="picture"/> ->
     #      tag => "img", attrs => [("src", "//blank.jpg"), ("class", "picture")]
@@ -255,7 +256,7 @@ def process_deviant_url(url):
         filedata = response.read()
         parser = DeviantHTMLParser()
         try:
-            parser.feed(filedata)
+            parser.feed(filedata.decode('utf-8'))
             if parser.IMAGE is not None:
                 return [parser.IMAGE]
             return [url]
@@ -309,15 +310,16 @@ def slugify(value):
     # value = re.sub(r'[-\s]+', '-', value) # not replacing space with hypen
     return value
     
-def remove_file_extension(mystr):
-    """ Removes file extension at the end of mystr parameter """
-    exts = ['.png', '.jpg', '.jpeg', '.jfif', '.gif', '.bmp', '.tif', '.mp4', 'webm', '.tiff', '.webp', '.bpg', '.bat', 
-            '.heif', '.exif', '.ppm', '.cgm', '.svg']
-    for ext in exts:
-        index = mystr.rfind(ext)
-        if index != -1:
-            return mystr[:index]
+def remove_extension(mystr):
+    """ Returns filename found in mystr by locating image file extension """
+    exts = ['.png', '.jpg', 'webm', '.jpeg', '.jfif', '.gif', 'gifv', '.bmp', '.tif', '.tiff', '.webp', '.bpg', '.bat', 
+        '.heif', '.exif', '.ppm', '.cgm', '.svg']     
+    for e in exts:
+        ext_index = mystr.find(e)
+        if ext_index != -1:
+            return mystr[:ext_index]
     return mystr
+    
 
 def parse_args(args):
     PARSER = ArgumentParser(description='Downloads files with specified extension'
@@ -521,7 +523,16 @@ def main(args):
                     # Download the image
                     try:
                         if 'imgur.com' in URL:
-                            ImgurAlbumDownloader(URL, ARGS.dir, remove_file_extension(FILENAME)).save_images()
+                            save_path = os.path.join(os.getcwd(), ARGS.dir)
+                            if ARGS.verbose:
+                                print('URL: ' + URL)
+                                print('ARGS.dir: {0}'.format(ARGS.dir))
+                                print('save_path: {0}'.format(save_path))
+                                print('Attempting to download via ImgurDownloader class.')                            
+                            downloader = ImgurDownloader(URL, save_path, remove_extension(FILENAME), debug=False)
+                            downloader.save_images()
+                            if ARGS.verbose:
+                                print('Successfully downloaded via ImgurDownloader class.')
                         else:
                             download_from_url(URL, FILEPATH)
                         # Image downloaded successfully!
@@ -529,6 +540,7 @@ def main(args):
                         FILECOUNT += 1
 
                     except Exception as e:
+                        print (e)
                         ERRORS += 1
 
                     if ARGS.num and DOWNLOADED >= ARGS.num:
