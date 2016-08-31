@@ -310,6 +310,7 @@ def slugify(value):
     # value = re.sub(r'[-\s]+', '-', value) # not replacing space with hypen
     return value
     
+    
 def remove_extension(mystr):
     """ Returns filename found in mystr by locating image file extension """
     exts = ['.png', '.jpg', 'webm', '.jpeg', '.jfif', '.gif', 'gifv', '.bmp', '.tif', '.tiff', '.webp', '.bpg', '.bat', 
@@ -320,6 +321,41 @@ def remove_extension(mystr):
             return mystr[:ext_index]
     return mystr
     
+    
+def history_log(wdir, file_log, mode='read', write_data={}):
+    '''
+    DESCRIPTION:
+        1. if mode == 'read' then it tries to read the file, file_log located in wdir returning a dictionary of the text
+            if that fails, it returns an emtpy dictionary
+        2. elif mode == 'write' it creates (or overwrites) the file, file_log, located in wdir with write_data
+        3. elif mode == 'append' create file_log if not avail and append write_data
+        This function does not create wdir
+    PARAMETERS:
+        wdir:       string - directory to save to. can refer to full path or just folder name as long as it exists
+        file_log:   string - file to save to
+        mode:       string - 'read' or 'write', see description above
+        write_data: any    - only relevant if mode == 'write', output is converted to string and written to file_log
+    '''
+    path = os.path.join(os.getcwd(), wdir) if not os.path.isdir(wdir) else wdir
+    if mode == 'read':    
+        try:
+            with open(os.path.join(path, file_log), 'r') as f:
+                data = f.read()    
+                return eval(data)
+        except IOError:
+                return {}
+    elif mode == 'write':
+        with open(os.path.join(path, file_log), 'w') as f:
+            f.write(str(write_data))
+            return True
+    elif mode == 'append':
+        with open(os.path.join(path, file_log), 'a') as f:
+            f.write(str(write_data))
+            return True
+    else:
+        print ('Error in historyLog func: invalid mode')
+        return False
+
 
 def parse_args(args):
     PARSER = ArgumentParser(description='Downloads files with specified extension'
@@ -384,13 +420,32 @@ def main(args):
     ARGS.verbose = False
 
     logging.basicConfig(level=logging.INFO)
-
+            
     TOTAL = DOWNLOADED = ERRORS = SKIPPED = FAILED = 0
     FINISHED = False
 
     # Create the specified directory if it doesn't already exist.
     if not pathexists(ARGS.dir):
         mkdir(ARGS.dir)
+
+    # 2 vars used to keep track of reddit id's downloaded from
+    LOG_FILE = '._history.txt'
+    LOG_DATA = history_log(ARGS.dir, LOG_FILE, 'read')
+    IS_NEW_LOG = False
+    try:
+        LAST = LOG_DATA[ARGS.reddit][ARGS.sort_type]['last-id']
+    except Exception as e:
+        IS_NEW_LOG = True
+        LOG_DATA = {
+            ARGS.reddit: {
+                ARGS.sort_type: {
+                    'last-id': ''
+                }
+            }
+        }
+        history_log(ARGS.dir, LOG_FILE, 'write', LOG_DATA)
+        if ARGS.verbose:
+            print (str(e) + '\nDid not load last-id from .history.txt file')
 
     # If a regex has been specified, compile the rule (once)
     RE_RULE = None
@@ -400,7 +455,9 @@ def main(args):
     # compile reddit comment url to check if url is one of them
     reddit_comment_regex = re.compile(r'.*reddit\.com\/r\/(.*?)\/comments')
 
-    LAST = ARGS.last
+    # allows --last cli arg to out prioritize what's loaded from LOG_FILE
+    if IS_NEW_LOG or ARGS.last != '':
+        LAST = ARGS.last
 
     start_time = None
     ITEM = None
@@ -524,7 +581,7 @@ def main(args):
                     try:
                         if 'imgur.com' in URL:
                             save_path = os.path.join(os.getcwd(), ARGS.dir)
-                            if ARGS.verbose:
+                            if ARGS.verbose: 
                                 print('URL: ' + URL)
                                 print('ARGS.dir: {0}'.format(ARGS.dir))
                                 print('save_path: {0}'.format(save_path))
@@ -538,7 +595,7 @@ def main(args):
                         # Image downloaded successfully!
                         DOWNLOADED += 1
                         FILECOUNT += 1
-
+                            
                     except Exception as e:
                         print (e)
                         ERRORS += 1
@@ -570,7 +627,10 @@ def main(args):
                 break
 
         LAST = ITEM['id'] if ITEM is not None else None
-
+        # keep track of last id downloaded
+        if LAST:
+            LOG_DATA[ARGS.reddit][ARGS.sort_type]['last-id'] = LAST
+            history_log(ARGS.dir, LOG_FILE, mode='write', write_data=LOG_DATA)
 #    print('Downloaded {} files'.format(DOWNLOADED))
 #    '(Processed {}, Skipped {}, Exists {})'.format(TOTAL, SKIPPED, ERRORS)
 
