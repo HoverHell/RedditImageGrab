@@ -20,6 +20,7 @@ from .gfycat import gfycat
 from .reddit import getitems
 sys.path.append(os.path.join(os.path.dirname(__file__), 'imgur-downloader'))
 from imguralbum import ImgurDownloader
+from .parse_subreddit_list import parse_subreddit_list
 
 
 _log = logging.getLogger('redditdownload')
@@ -313,8 +314,9 @@ def slugify(value):
     
 def remove_extension(mystr):
     """ Returns filename found in mystr by locating image file extension """
-    exts = ['.png', '.jpg', 'webm', '.jpeg', '.jfif', '.gif', 'gifv', '.bmp', '.tif', '.tiff', '.webp', '.bpg', '.bat', 
-        '.heif', '.exif', '.ppm', '.cgm', '.svg']     
+    exts = ['.png', '.jpg', 'webm', '.jpeg', '.jfif', '.gif', 'gifv', '.bmp',
+            '.tif', '.tiff', '.webp', '.bpg', '.bat', 
+            '.heif', '.exif', '.ppm', '.cgm', '.svg']     
     for e in exts:
         ext_index = mystr.find(e)
         if ext_index != -1:
@@ -360,13 +362,17 @@ def history_log(wdir, file_log, mode='read', write_data={}):
 def parse_args(args):
     PARSER = ArgumentParser(description='Downloads files with specified extension'
                             'from the specified subreddit.')
-    PARSER.add_argument('reddit', metavar='<subreddit>', help='Subreddit name.')
-    PARSER.add_argument('dir', metavar='<dest_file>', nargs='?',
-                        default=getcwd(), help='Dir to put downloaded files in.')
+    PARSER.add_argument('--reddit', metavar='<subreddit>', default='', type=str,
+                        help='Subreddit name.', required=False)
+    PARSER.add_argument('--dir', metavar='<dest_file>', nargs='?', default=getcwd(),
+                        help='Dir to put downloaded files in.', required=False)
     PARSER.add_argument('--multireddit', default=False, action='store_true',
                         required=False,
                         help='Take multirredit instead of subreddit as input.'
                         'If so, provide /user/m/multireddit-name as argument')
+    PARSER.add_argument('--subreddit-list', metavar='srl', default=False, type=str, 
+                        required=False, nargs=1,
+                        help='name of text file containing list of subreddits')
     PARSER.add_argument('--last', metavar='l', default='', required=False,
                         help='ID of the last downloaded file.')
     PARSER.add_argument('--score', metavar='s', default=0, type=int, required=False,
@@ -417,7 +423,7 @@ def parse_reddit_argument(reddit_args):
 
 def main(args):
     ARGS = parse_args(args if len(args)>0 else sys.argv[1:])
-    ARGS.verbose = False
+#    ARGS.verbose = False
 
     logging.basicConfig(level=logging.INFO)
             
@@ -428,25 +434,6 @@ def main(args):
     if not pathexists(ARGS.dir):
         mkdir(ARGS.dir)
 
-    # 2 vars used to keep track of reddit id's downloaded from
-    LOG_FILE = '._history.txt'
-    LOG_DATA = history_log(ARGS.dir, LOG_FILE, 'read')
-    IS_NEW_LOG = False
-    try:
-        LAST = LOG_DATA[ARGS.reddit][ARGS.sort_type]['last-id']
-    except Exception as e:
-        IS_NEW_LOG = True
-        LOG_DATA = {
-            ARGS.reddit: {
-                ARGS.sort_type: {
-                    'last-id': ''
-                }
-            }
-        }
-        history_log(ARGS.dir, LOG_FILE, 'write', LOG_DATA)
-        if ARGS.verbose:
-            print (str(e) + '\nDid not load last-id from .history.txt file')
-
     # If a regex has been specified, compile the rule (once)
     RE_RULE = None
     if ARGS.regex:
@@ -455,10 +442,6 @@ def main(args):
     # compile reddit comment url to check if url is one of them
     reddit_comment_regex = re.compile(r'.*reddit\.com\/r\/(.*?)\/comments')
 
-    # allows --last cli arg to out prioritize what's loaded from LOG_FILE
-    if IS_NEW_LOG or ARGS.last != '':
-        LAST = ARGS.last
-
     start_time = None
     ITEM = None
 
@@ -466,7 +449,46 @@ def main(args):
     if sort_type:
         sort_type = sort_type.lower()
 
-    while not FINISHED:
+    SUBREDDIT_LIST = []
+    SUBREDDIT_LIST_INDEX = 0
+    
+    if ARGS.subreddit_list:     
+        ARGS.subreddit_list = ARGS.subreddit_list[0]
+        SUBREDDIT_FILE = os.path.join(os.getcwd(), ARGS.subreddit_list)
+        SUBREDDIT_LIST = parse_subreddit_list(SUBREDDIT_FILE)
+        SUBREDDIT_LIST_INDEX = 0
+        if ARGS.verbose:
+            print('SUBREDDIT_LIST: %s' % SUBREDDIT_LIST)
+    
+    while not FINISHED or (not ARGS.subreddit_list and len(SUBREDDIT_LIST) > SUBREDDIT_LIST_INDEX):
+        print('MAIN LOOP REACHED')
+        TOTAL = DOWNLOADED = ERRORS = SKIPPED = FAILED = 0
+        FINISHED = False
+        
+        if ARGS.subreddit_list:
+            print(SUBREDDIT_LIST_INDEX)
+            (ARGS.reddit, ARGS.dir) = SUBREDDIT_LIST[SUBREDDIT_LIST_INDEX]
+            print(ARGS.reddit)
+            print(ARGS.dir)
+            
+        # 2 vars used to keep track of reddit id's downloaded from
+        LOG_FILE = '._history.txt'
+        LOG_DATA = history_log(ARGS.dir, LOG_FILE, 'read')
+        try:
+            LAST = LOG_DATA[ARGS.reddit][ARGS.sort_type]['last-id']
+        except Exception as e:
+            LAST = ''
+            LOG_DATA = {
+                ARGS.reddit: {
+                    ARGS.sort_type: {
+                        'last-id': ''
+                    }
+                }
+            }
+            history_log(ARGS.dir, LOG_FILE, 'write', LOG_DATA)
+            if ARGS.verbose:
+                print ('Did not load last-id from %s file, created new %s' % (LOG_FILE, LOG_FILE))
+                
         ITEMS = getitems(
             ARGS.reddit, multireddit=ARGS.multireddit, previd=LAST,
             reddit_sort=sort_type)
@@ -483,7 +505,7 @@ def main(args):
 
         start_time = time.clock()
 
-        if not ITEMS:
+        if not ITEMS and (not ARGS.subreddit_list or len(SUBREDDIT_LIST) == SUBREDDIT_LIST_INDEX):
             # No more items to process
             break
         
@@ -586,10 +608,10 @@ def main(args):
                                 print('ARGS.dir: {0}'.format(ARGS.dir))
                                 print('save_path: {0}'.format(save_path))
                                 print('Attempting to download via ImgurDownloader class.')                            
-                            downloader = ImgurDownloader(URL, save_path, remove_extension(FILENAME), debug=False)
+                            downloader = ImgurDownloader(URL, save_path, 
+                                                         remove_extension(FILENAME), 
+                                                         delete_dne=False, debug=False)
                             downloader.save_images()
-                            if ARGS.verbose:
-                                print('Successfully downloaded via ImgurDownloader class.')
                         else:
                             download_from_url(URL, FILEPATH)
                         # Image downloaded successfully!
@@ -601,6 +623,9 @@ def main(args):
                         ERRORS += 1
 
                     if ARGS.num and DOWNLOADED >= ARGS.num:
+                        print('    Dl num limit reached, exiting.')
+                        if ARGS.subreddit_list:
+                            SUBREDDIT_LIST_INDEX += 1
                         FINISHED = True
                         break
                 except WrongFileTypeException as ERROR:
@@ -612,6 +637,8 @@ def main(args):
                     ERRORS += 1
                     if ARGS.update:
                         print('    Update complete, exiting.')
+                        if ARGS.subreddit_list:
+                            SUBREDDIT_LIST_INDEX += 1
                         FINISHED = True
                         break
                 except HTTPError as ERROR:
@@ -625,17 +652,19 @@ def main(args):
 
             if FINISHED:
                 break
-
+            
         LAST = ITEM['id'] if ITEM is not None else None
         # keep track of last id downloaded
         if LAST:
             LOG_DATA[ARGS.reddit][ARGS.sort_type]['last-id'] = LAST
             history_log(ARGS.dir, LOG_FILE, mode='write', write_data=LOG_DATA)
+        
+
 #    print('Downloaded {} files'.format(DOWNLOADED))
 #    '(Processed {}, Skipped {}, Exists {})'.format(TOTAL, SKIPPED, ERRORS)
 
     return DOWNLOADED
-
+    
 
 if __name__ == "__main__":
     main("")

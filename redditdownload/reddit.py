@@ -6,7 +6,6 @@ from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 from json import JSONDecoder
 
-
 def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
     """Return list of items from a subreddit.
 
@@ -30,7 +29,7 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
                        'Check the multireddit flag. '
                        'Call --help for more info')
             print(warning)
-            sys.exit(1)
+            sys.exit(1)                                                 
         # no sorting needed
         if reddit_sort is None:
             url = 'http://www.reddit.com/r/{}.json'.format(subreddit)
