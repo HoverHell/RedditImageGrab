@@ -12,13 +12,27 @@ subreddit and download them to a folder.
 
 ### Features and Changes:
 
-* Adapted to Python 3 by merge from [ohyou/RedditImageGrab](https://github.com/ohyou/RedditImageGrab)
+* Adapted to Python 3 by merge from [ohyou/RedditImageGrab](https://github.com/ohyou/RedditImageGrab) & function slugify(...) fix
 
 * \-\-num cli argument now counts by reddit submission rather than individual image
 
-* added my fork (jtara1/imgur-album-download) to handle all imgur downloads (making the above feature possible)
+    * added my fork (jtara1/imgur-downloader) to handle all imgur downloads (making the above feature possible)
 
-* fixed slugify function in redditdownload.py (which fixed --filename-format cli argument)
+* fixed slugify function in redditdownload.py (which fixed \-\-filename-format cli argument)
+
+* file .\_history.txt contains reddit id of last downloaded and is identified by subreddit & ARGS.sort\_type, e.g.:
+
+    > {'wallpapers': {'topmonth': {'last\-id': '4x4so2'}}}
+
+* positional arguments, <subreddit> and <dest\_file>, changed to optional cli arguments
+
+* [\-\-subreddit\-list srl] cli argument added where srl is the filename containing list of subreddits to process
+
+    * added ./redditdownload/parse\_subreddit\_list.py to process subreddit list for subreddit links & associated save location for each
+    
+    * at this time, the same cli arguments are used for all subreddits in list, but save folder can be altered
+    
+    * example subreddits.txt added, see parse\_subreddit\_list.py docstring for more info
 
 
 # Requirements:
