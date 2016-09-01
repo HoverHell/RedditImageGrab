@@ -34,6 +34,7 @@ subreddit and download them to a folder.
     
     * example subreddits.txt added, see parse\_subreddit\_list.py docstring for more info
 
+* updated progress report variables such as DOWNLOADED and ERRORS to accommodate for processing a list of subreddits
 
 # Requirements:
 
