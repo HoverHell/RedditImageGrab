@@ -59,7 +59,7 @@ def parse_subreddit_list(file_path, root_path=''):
     path = folder_path
     for line in file:
         if line == '\n':
-            break
+            continue
         folder_match = re.match(folder_regex, line)
         if folder_match:
             if folder_match.group(1) != '':
