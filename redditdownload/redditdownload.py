@@ -429,6 +429,7 @@ def main(args):
             
     TOTAL = DOWNLOADED = ERRORS = SKIPPED = FAILED = 0
     FINISHED = False
+    MORE_SUBREDDITS = True
 
     # Create the specified directory if it doesn't already exist.
     if not pathexists(ARGS.dir):
@@ -455,17 +456,17 @@ def main(args):
     if ARGS.subreddit_list:     
         ARGS.subreddit_list = ARGS.subreddit_list[0]
         SUBREDDIT_FILE = os.path.join(os.getcwd(), ARGS.subreddit_list)
-        SUBREDDIT_LIST = parse_subreddit_list(SUBREDDIT_FILE)
+        SUBREDDIT_LIST = parse_subreddit_list(SUBREDDIT_FILE, ARGS.dir)
         SUBREDDIT_LIST_INDEX = 0
         if ARGS.verbose:
             print('SUBREDDIT_LIST: %s' % SUBREDDIT_LIST)
     
-    while not FINISHED or (not ARGS.subreddit_list and len(SUBREDDIT_LIST) > SUBREDDIT_LIST_INDEX):
+    while not FINISHED or MORE_SUBREDDITS:
         print('MAIN LOOP REACHED')
-        TOTAL = DOWNLOADED = ERRORS = SKIPPED = FAILED = 0
-        FINISHED = False
         
         if ARGS.subreddit_list:
+            TOTAL = DOWNLOADED = ERRORS = SKIPPED = FAILED = 0
+            FINISHED = False
             print(SUBREDDIT_LIST_INDEX)
             (ARGS.reddit, ARGS.dir) = SUBREDDIT_LIST[SUBREDDIT_LIST_INDEX]
             print(ARGS.reddit)
@@ -602,16 +603,12 @@ def main(args):
                     # Download the image
                     try:
                         if 'imgur.com' in URL:
-                            save_path = os.path.join(os.getcwd(), ARGS.dir)
-                            if ARGS.verbose: 
-                                print('URL: ' + URL)
-                                print('ARGS.dir: {0}'.format(ARGS.dir))
-                                print('save_path: {0}'.format(save_path))
-                                print('Attempting to download via ImgurDownloader class.')                            
-                            downloader = ImgurDownloader(URL, save_path, 
+                            save_path=os.path.join(os.getcwd(), ARGS.dir)                          
+                            downloader=ImgurDownloader(URL, save_path, 
                                                          remove_extension(FILENAME), 
                                                          delete_dne=False, debug=False)
                             downloader.save_images()
+                            print('Downloaded via jtara1/imgur-downloader')
                         else:
                             download_from_url(URL, FILEPATH)
                         # Image downloaded successfully!
@@ -626,6 +623,7 @@ def main(args):
                         print('    Dl num limit reached, exiting.')
                         if ARGS.subreddit_list:
                             SUBREDDIT_LIST_INDEX += 1
+                            print(SUBREDDIT_LIST_INDEX)
                         FINISHED = True
                         break
                 except WrongFileTypeException as ERROR:
@@ -639,6 +637,7 @@ def main(args):
                         print('    Update complete, exiting.')
                         if ARGS.subreddit_list:
                             SUBREDDIT_LIST_INDEX += 1
+                            print(SUBREDDIT_LIST_INDEX)
                         FINISHED = True
                         break
                 except HTTPError as ERROR:
@@ -651,6 +650,7 @@ def main(args):
                     FAILED += 1
 
             if FINISHED:
+                MORE_SUBREDDITS = False if SUBREDDIT_LIST_INDEX >= len(SUBREDDIT_LIST) else True
                 break
             
         LAST = ITEM['id'] if ITEM is not None else None

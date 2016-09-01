@@ -31,7 +31,7 @@ import re
 import os
 from os import getcwd, mkdir
 
-def parse_subreddit_list(file_path, folder_path=''):
+def parse_subreddit_list(file_path, root_path=''):
     """ 
         INPUT: file (full path) of list of subreddits
         OUTPUT: list of tuples with full subreddit url and save path (see docstring on line 1 for e.g.)
@@ -47,22 +47,26 @@ def parse_subreddit_list(file_path, folder_path=''):
     subreddit_regex = re.compile('(?:https?://)?(?:www.)?reddit.com/r/([a-zA-Z0-9_]*)')
     subreddit_regex2 = re.compile('(?:/r/)?([a-zA-Z0-9_]*)')
     
-    if folder_path == '':
+    if root_path != '':
+        folder_path = root_path
+    elif root_path == '':
         folder_path = getcwd()
-    elif not os.path.isdir(folder_path):
+    
+    if not os.path.isdir(folder_path):
         mkdir(folder_path)
         
     # iterate through the lines using regex to check if line is subreddit or folder title
+    path = folder_path
     line = file.readline()
     while(line != ''):
         folder_match = re.match(folder_regex, line)
         if folder_match:
             if folder_match.group(1) != '':
-                folder_path = os.path.join(folder_path, line[:-2])
-                if not os.path.isdir(folder_path):
-                    mkdir(folder_path)
+                path = os.path.join(folder_path, line[:-2])
+                if not os.path.isdir(path):
+                    mkdir(path)
             else:
-                folder_path = getcwd()
+                path = folder_path
             line = file.readline()
             continue
         
@@ -75,7 +79,7 @@ def parse_subreddit_list(file_path, folder_path=''):
                 continue
             
         subreddit = subreddit_match.group(1)                
-        final_path = os.path.join(folder_path, subreddit)
+        final_path = os.path.join(path, subreddit)
         if not os.path.isdir(final_path):
             mkdir(final_path)
         output.append((subreddit, final_path))                
