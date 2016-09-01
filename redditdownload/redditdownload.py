@@ -427,7 +427,10 @@ def main(args):
 
     logging.basicConfig(level=logging.INFO)
             
-    TOTAL = DOWNLOADED = ERRORS = SKIPPED = FAILED = 0
+#    TOTAL_TOTAL = TOTAL_DOWNLOADED = TOTAL_ERRORS = TOTAL_SKIPPED = TOTAL_FAILED = 0
+    # value at first index is of current subreddit, second index is total
+    TOTAL = DOWNLOADED = ERRORS = SKIPPED = FAILED = [0,0]
+    PROG_REPORT = [TOTAL, DOWNLOADED, ERRORS, SKIPPED, FAILED]
     FINISHED = False
     MORE_SUBREDDITS = True
 
@@ -465,7 +468,7 @@ def main(args):
         print('MAIN LOOP REACHED')
         
         if ARGS.subreddit_list:
-            TOTAL = DOWNLOADED = ERRORS = SKIPPED = FAILED = 0
+            TOTAL[0] = DOWNLOADED[0] = ERRORS[0] = SKIPPED[0] = FAILED[0] = 0
             FINISHED = False
             print(SUBREDDIT_LIST_INDEX)
             (ARGS.reddit, ARGS.dir) = SUBREDDIT_LIST[SUBREDDIT_LIST_INDEX]
@@ -511,7 +514,7 @@ def main(args):
             break
         
         for ITEM in ITEMS:
-            TOTAL += 1
+            TOTAL[0] += 1
 
             # not downloading if url is reddit comment
             if ('reddit.com/r/' + ARGS.reddit + '/comments/' in ITEM['url'] or
@@ -523,31 +526,31 @@ def main(args):
                     print('    SCORE: {} has score of {}'.format(ITEM['id'], ITEM['score']))
                     'which is lower than required score of {}.'.format(ARGS.score)
 
-                SKIPPED += 1
+                SKIPPED[0] += 1
                 continue
             elif ARGS.sfw and ITEM['over_18']:
                 if ARGS.verbose:
                     print('    NSFW: %s is marked as NSFW.' % (ITEM['id']))
 
-                SKIPPED += 1
+                SKIPPED[0] += 1
                 continue
             elif ARGS.nsfw and not ITEM['over_18']:
                 if ARGS.verbose:
                     print('    Not NSFW, skipping %s' % (ITEM['id']))
 
-                SKIPPED += 1
+                SKIPPED[0] += 1
                 continue
             elif ARGS.regex and not re.match(RE_RULE, ITEM['title']):
                 if ARGS.verbose:
                     print('    Regex match failed')
 
-                SKIPPED += 1
+                SKIPPED[0] += 1
                 continue
             elif ARGS.skipAlbums and 'imgur.com/a/' in ITEM['url']:
                 if ARGS.verbose:
                     print('    Album found, skipping %s' % (ITEM['id']))
 
-                SKIPPED += 1
+                SKIPPED[0] += 1
                 continue
 
             if ARGS.title_contain and ARGS.title_contain.lower() not in ITEM['title'].lower():
@@ -555,7 +558,7 @@ def main(args):
                     print('    Title not contain "{}",'.format(ARGS.title_contain))
                     'skipping {}'.format(ITEM['id'])
 
-                SKIPPED += 1
+                SKIPPED[0] += 1
                 continue
 
             FILECOUNT = 0
@@ -612,14 +615,14 @@ def main(args):
                         else:
                             download_from_url(URL, FILEPATH)
                         # Image downloaded successfully!
-                        DOWNLOADED += 1
+                        DOWNLOADED[0] += 1
                         FILECOUNT += 1
                             
                     except Exception as e:
                         print (e)
-                        ERRORS += 1
+                        ERRORS[0] += 1
 
-                    if ARGS.num and DOWNLOADED >= ARGS.num:
+                    if ARGS.num and DOWNLOADED[0] >= ARGS.num:
                         print('    Dl num limit reached, exiting.')
                         if ARGS.subreddit_list:
                             SUBREDDIT_LIST_INDEX += 1
@@ -628,11 +631,11 @@ def main(args):
                         break
                 except WrongFileTypeException as ERROR:
                     _log_wrongtype(url=URL, target_dir=ARGS.dir,
-                                   filecount=FILECOUNT, _downloaded=DOWNLOADED,
+                                   filecount=FILECOUNT, _downloaded=DOWNLOADED[0],
                                    filename=FILENAME)
-                    SKIPPED += 1
+                    SKIPPED[0] += 1
                 except FileExistsException as ERROR:
-                    ERRORS += 1
+                    ERRORS[0] += 1
                     if ARGS.update:
                         print('    Update complete, exiting.')
                         if ARGS.subreddit_list:
@@ -641,13 +644,13 @@ def main(args):
                         FINISHED = True
                         break
                 except HTTPError as ERROR:
-                    FAILED += 1
+                    FAILED[0] += 1
                 except URLError as ERROR:
-                    FAILED += 1
+                    FAILED[0] += 1
                 except InvalidURL as ERROR:
-                    FAILED += 1
+                    FAILED[0] += 1
                 except Exception as exc:
-                    FAILED += 1
+                    FAILED[0] += 1
 
             if FINISHED:
                 MORE_SUBREDDITS = False if SUBREDDIT_LIST_INDEX >= len(SUBREDDIT_LIST) else True
@@ -659,11 +662,15 @@ def main(args):
             LOG_DATA[ARGS.reddit][ARGS.sort_type]['last-id'] = LAST
             history_log(ARGS.dir, LOG_FILE, mode='write', write_data=LOG_DATA)
         
+        # update total, download, ... variables
+        for item in PROG_REPORT:
+            item[1] += item[0]
+        
 
-#    print('Downloaded {} files'.format(DOWNLOADED))
-#    '(Processed {}, Skipped {}, Exists {})'.format(TOTAL, SKIPPED, ERRORS)
+    print('Downloaded from {} reddit submissions'.format(DOWNLOADED[1]))
+    '(Processed {}, Skipped {}, Errors {})'.format(TOTAL[1], SKIPPED[1], ERRORS[1])
 
-    return DOWNLOADED
+    return DOWNLOADED[1]
     
 
 if __name__ == "__main__":
