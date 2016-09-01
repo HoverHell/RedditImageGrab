@@ -466,12 +466,16 @@ def main(args):
     
     while not FINISHED or MORE_SUBREDDITS:
         print('MAIN LOOP REACHED')
-        
+
         if ARGS.subreddit_list:
             TOTAL[0] = DOWNLOADED[0] = ERRORS[0] = SKIPPED[0] = FAILED[0] = 0
             FINISHED = False
             print(SUBREDDIT_LIST_INDEX)
-            (ARGS.reddit, ARGS.dir) = SUBREDDIT_LIST[SUBREDDIT_LIST_INDEX]
+            try:            
+                (ARGS.reddit, ARGS.dir) = SUBREDDIT_LIST[SUBREDDIT_LIST_INDEX]
+            except IndexError as e:
+                print('End of subreddit list reached, exiting.')
+                break
             print(ARGS.reddit)
             print(ARGS.dir)
             
@@ -496,6 +500,10 @@ def main(args):
         ITEMS = getitems(
             ARGS.reddit, multireddit=ARGS.multireddit, previd=LAST,
             reddit_sort=sort_type)
+                
+        # debug ITEMS variable value
+        if ARGS.verbose:
+            history_log(os.getcwd(), 'ITEMS.txt', 'write', ITEMS)
 
         # measure time and set the program to wait 4 second between request
         # as per reddit api guidelines
@@ -509,9 +517,9 @@ def main(args):
 
         start_time = time.clock()
 
-        if not ITEMS and (not ARGS.subreddit_list or len(SUBREDDIT_LIST) == SUBREDDIT_LIST_INDEX):
-            # No more items to process
-            break
+        # No more items to process
+        if not ITEMS:
+            SUBREDDIT_LIST_INDEX += 1
         
         for ITEM in ITEMS:
             TOTAL[0] += 1
@@ -614,6 +622,7 @@ def main(args):
                             print('Downloaded via jtara1/imgur-downloader')
                         else:
                             download_from_url(URL, FILEPATH)
+                            print('Downloaded via download_from_url(...)')
                         # Image downloaded successfully!
                         DOWNLOADED[0] += 1
                         FILECOUNT += 1
@@ -623,7 +632,7 @@ def main(args):
                         ERRORS[0] += 1
 
                     if ARGS.num and DOWNLOADED[0] >= ARGS.num:
-                        print('    Dl num limit reached, exiting.')
+                        print('    Download num limit reached, exiting.')
                         if ARGS.subreddit_list:
                             SUBREDDIT_LIST_INDEX += 1
                             print(SUBREDDIT_LIST_INDEX)
@@ -655,20 +664,22 @@ def main(args):
             if FINISHED:
                 MORE_SUBREDDITS = False if SUBREDDIT_LIST_INDEX >= len(SUBREDDIT_LIST) else True
                 break
-            
-        LAST = ITEM['id'] if ITEM is not None else None
+        
         # keep track of last id downloaded
+        LAST = ITEM['id'] if ITEM is not None else None
         if LAST:
             LOG_DATA[ARGS.reddit][ARGS.sort_type]['last-id'] = LAST
             history_log(ARGS.dir, LOG_FILE, mode='write', write_data=LOG_DATA)
         
-        # update total, download, ... variables
+        # update variables in PROG_REPORT
         for item in PROG_REPORT:
             item[1] += item[0]
         
+        if ARGS.subreddit_list and TOTAL[1] - SKIPPED[1] >= ARGS.num:
+            SUBREDDIT_LIST_INDEX += 1
 
     print('Downloaded from {} reddit submissions'.format(DOWNLOADED[1]))
-    '(Processed {}, Skipped {}, Errors {})'.format(TOTAL[1], SKIPPED[1], ERRORS[1])
+    print('(Processed {}, Skipped {}, Errors {})'.format(TOTAL[1], SKIPPED[1], ERRORS[1]))
 
     return DOWNLOADED[1]
     
