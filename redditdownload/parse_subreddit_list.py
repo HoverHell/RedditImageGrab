@@ -33,7 +33,7 @@ from os import getcwd, mkdir
 
 def parse_subreddit_list(file_path, root_path=''):
     """ 
-        INPUT: file (full path) of list of subreddits
+        INPUT: file (full path) of list of subreddits, & root_path for root save location
         OUTPUT: list of tuples with full subreddit url and save path (see docstring on line 1 for e.g.)
     """
     try:    
@@ -57,8 +57,9 @@ def parse_subreddit_list(file_path, root_path=''):
         
     # iterate through the lines using regex to check if line is subreddit or folder title
     path = folder_path
-    line = file.readline()
-    while(line != ''):
+    for line in file:
+        if line == '\n':
+            break
         folder_match = re.match(folder_regex, line)
         if folder_match:
             if folder_match.group(1) != '':
@@ -67,7 +68,6 @@ def parse_subreddit_list(file_path, root_path=''):
                     mkdir(path)
             else:
                 path = folder_path
-            line = file.readline()
             continue
         
         subreddit_match = re.match(subreddit_regex, line)
@@ -83,7 +83,5 @@ def parse_subreddit_list(file_path, root_path=''):
         if not os.path.isdir(final_path):
             mkdir(final_path)
         output.append((subreddit, final_path))                
-        
-        line = file.readline()
         
     return output
