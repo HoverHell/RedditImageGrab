@@ -427,12 +427,10 @@ def main(args):
 
     logging.basicConfig(level=logging.INFO)
             
-#    TOTAL_TOTAL = TOTAL_DOWNLOADED = TOTAL_ERRORS = TOTAL_SKIPPED = TOTAL_FAILED = 0
     # value at first index is of current subreddit, second index is total
     TOTAL = DOWNLOADED = ERRORS = SKIPPED = FAILED = [0,0]
     PROG_REPORT = [TOTAL, DOWNLOADED, ERRORS, SKIPPED, FAILED]
-    FINISHED = False
-    MORE_SUBREDDITS = True
+    print (PROG_REPORT)
 
     # Create the specified directory if it doesn't already exist.
     if not pathexists(ARGS.dir):
@@ -452,33 +450,24 @@ def main(args):
     sort_type = ARGS.sort_type
     if sort_type:
         sort_type = sort_type.lower()
-
-    SUBREDDIT_LIST = []
-    SUBREDDIT_LIST_INDEX = 0
     
     if ARGS.subreddit_list:     
         ARGS.subreddit_list = ARGS.subreddit_list[0]
         SUBREDDIT_FILE = os.path.join(os.getcwd(), ARGS.subreddit_list)
         SUBREDDIT_LIST = parse_subreddit_list(SUBREDDIT_FILE, ARGS.dir)
-        SUBREDDIT_LIST_INDEX = 0
         if ARGS.verbose:
-            print('SUBREDDIT_LIST: %s' % SUBREDDIT_LIST)
-    
-    while not FINISHED or MORE_SUBREDDITS:
-        print('MAIN LOOP REACHED')
-
-        if ARGS.subreddit_list:
-            TOTAL[0] = DOWNLOADED[0] = ERRORS[0] = SKIPPED[0] = FAILED[0] = 0
-            FINISHED = False
-            print(SUBREDDIT_LIST_INDEX)
-            try:            
-                (ARGS.reddit, ARGS.dir) = SUBREDDIT_LIST[SUBREDDIT_LIST_INDEX]
-            except IndexError as e:
-                print('End of subreddit list reached, exiting.')
-                break
-            print(ARGS.reddit)
-            print(ARGS.dir)
+            print('SUBREDDIT_LIST = %s' % SUBREDDIT_LIST)
+    elif not ARGS.subreddit_list:
+        SUBREDDIT_LIST = [(ARGS.reddit, ARGS.dir)]
             
+    # iterate through subreddit(s)
+    for INDEX, SECTION in enumerate(SUBREDDIT_LIST):
+        (ARGS.reddit, ARGS.dir) = SECTION
+        FINISHED = False
+        
+        if ARGS.verbose:
+            print ('%s %s %s' % (INDEX, ARGS.reddit, ARGS.dir))
+        
         # 2 vars used to keep track of reddit id's downloaded from
         LOG_FILE = '._history.txt'
         LOG_DATA = history_log(ARGS.dir, LOG_FILE, 'read')
@@ -495,188 +484,183 @@ def main(args):
             }
             history_log(ARGS.dir, LOG_FILE, 'write', LOG_DATA)
             if ARGS.verbose:
-                print ('Did not load last-id from %s file, created new %s' % (LOG_FILE, LOG_FILE))
-                
-        ITEMS = getitems(
-            ARGS.reddit, multireddit=ARGS.multireddit, previd=LAST,
-            reddit_sort=sort_type)
-                
-        # debug ITEMS variable value
-        if ARGS.verbose:
-            history_log(os.getcwd(), 'ITEMS.txt', 'write', ITEMS)
-
-        # measure time and set the program to wait 4 second between request
-        # as per reddit api guidelines
-        end_time = time.clock()
-
-        if start_time is not None:
-            elapsed_time = end_time - start_time
-
-            if elapsed_time <= 4:  # throttling
-                time.sleep(4 - elapsed_time)
-
-        start_time = time.clock()
-
-        # No more items to process
-        if not ITEMS:
-            SUBREDDIT_LIST_INDEX += 1
+                print ('Did not load last-id from %s file, created new %s' % (LOG_FILE, LOG_FILE))  
         
-        for ITEM in ITEMS:
-            TOTAL[0] += 1
-
-            # not downloading if url is reddit comment
-            if ('reddit.com/r/' + ARGS.reddit + '/comments/' in ITEM['url'] or
-                    re.match(reddit_comment_regex, ITEM['url']) is not None):
-                continue
-
-            if ITEM['score'] < ARGS.score:
-                if ARGS.verbose:
-                    print('    SCORE: {} has score of {}'.format(ITEM['id'], ITEM['score']))
-                    'which is lower than required score of {}.'.format(ARGS.score)
-
-                SKIPPED[0] += 1
-                continue
-            elif ARGS.sfw and ITEM['over_18']:
-                if ARGS.verbose:
-                    print('    NSFW: %s is marked as NSFW.' % (ITEM['id']))
-
-                SKIPPED[0] += 1
-                continue
-            elif ARGS.nsfw and not ITEM['over_18']:
-                if ARGS.verbose:
-                    print('    Not NSFW, skipping %s' % (ITEM['id']))
-
-                SKIPPED[0] += 1
-                continue
-            elif ARGS.regex and not re.match(RE_RULE, ITEM['title']):
-                if ARGS.verbose:
-                    print('    Regex match failed')
-
-                SKIPPED[0] += 1
-                continue
-            elif ARGS.skipAlbums and 'imgur.com/a/' in ITEM['url']:
-                if ARGS.verbose:
-                    print('    Album found, skipping %s' % (ITEM['id']))
-
-                SKIPPED[0] += 1
-                continue
-
-            if ARGS.title_contain and ARGS.title_contain.lower() not in ITEM['title'].lower():
-                if ARGS.verbose:
-                    print('    Title not contain "{}",'.format(ARGS.title_contain))
-                    'skipping {}'.format(ITEM['id'])
-
-                SKIPPED[0] += 1
-                continue
-
-            FILECOUNT = 0
-            try:
-                URLS = extract_urls(ITEM['url'])
-            except Exception:
-                _log.exception("Failed to extract urls for %r", URLS)
-                continue
-            for URL in URLS:
-                try:
-                    # Find gfycat if requested
-                    if URL.endswith('gif') and ARGS.mirror_gfycat:
-                        check = gfycat().check(URL)
-                        if check.get("urlKnown"):
-                            URL = check.get('webmUrl')
-
-                    # Trim any http query off end of file extension.
-                    FILEEXT = pathsplitext(URL)[1]
-                    if '?' in FILEEXT:
-                        FILEEXT = FILEEXT[:FILEEXT.index('?')]
-
-                    # Only append numbers if more than one file
-                    FILENUM = ('_%d' % FILECOUNT if len(URLS) > 1 else '')
-
-                    # create filename based on given input from user
-                    if ARGS.filename_format == 'url':
-                        FILENAME = '%s%s%s' % (pathsplitext(pathbasename(URL))[0], '', FILEEXT)
-                    elif ARGS.filename_format == 'title':
-                        FILENAME = '%s%s%s' % (slugify(ITEM['title']), FILENUM, FILEEXT)
-                        
-                        if len(FILENAME) >= 256:
-                            shortened_item_title = slugify(ITEM['title'])[:256-len(FILENAME)]
-                            FILENAME = '%s%s%s' % (shortened_item_title, FILENUM, FILEEXT)
-                    else:
-                        FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)                 
+        # begin the loop to get reddit items & download them                
+        while not FINISHED:
+            print()
+    
+            ITEMS = getitems(
+                ARGS.reddit, multireddit=ARGS.multireddit, previd=LAST,
+                reddit_sort=sort_type)
                     
-                    # join file with directory
-                    FILEPATH = pathjoin(ARGS.dir, FILENAME)
-
-                    # Improve debuggability list URL before download too.
-                    # url may be wrong so skip that
-                    if URL.encode('utf-8') == 'http://':
-                        raise URLError('Url is empty')
-
-                    # Download the image
-                    try:
-                        if 'imgur.com' in URL:
-                            save_path=os.path.join(os.getcwd(), ARGS.dir)                          
-                            downloader=ImgurDownloader(URL, save_path, 
-                                                         remove_extension(FILENAME), 
-                                                         delete_dne=False, debug=False)
-                            downloader.save_images()
-                            print('Downloaded via jtara1/imgur-downloader')
-                        else:
-                            download_from_url(URL, FILEPATH)
-                            print('Downloaded via download_from_url(...)')
-                        # Image downloaded successfully!
-                        DOWNLOADED[0] += 1
-                        FILECOUNT += 1
-                            
-                    except Exception as e:
-                        print (e)
-                        ERRORS[0] += 1
-
-                    if ARGS.num and DOWNLOADED[0] >= ARGS.num:
-                        print('    Download num limit reached, exiting.')
-                        if ARGS.subreddit_list:
-                            SUBREDDIT_LIST_INDEX += 1
-                            print(SUBREDDIT_LIST_INDEX)
-                        FINISHED = True
-                        break
-                except WrongFileTypeException as ERROR:
-                    _log_wrongtype(url=URL, target_dir=ARGS.dir,
-                                   filecount=FILECOUNT, _downloaded=DOWNLOADED[0],
-                                   filename=FILENAME)
-                    SKIPPED[0] += 1
-                except FileExistsException as ERROR:
-                    ERRORS[0] += 1
-                    if ARGS.update:
-                        print('    Update complete, exiting.')
-                        if ARGS.subreddit_list:
-                            SUBREDDIT_LIST_INDEX += 1
-                            print(SUBREDDIT_LIST_INDEX)
-                        FINISHED = True
-                        break
-                except HTTPError as ERROR:
-                    FAILED[0] += 1
-                except URLError as ERROR:
-                    FAILED[0] += 1
-                except InvalidURL as ERROR:
-                    FAILED[0] += 1
-                except Exception as exc:
-                    FAILED[0] += 1
-
-            if FINISHED:
-                MORE_SUBREDDITS = False if SUBREDDIT_LIST_INDEX >= len(SUBREDDIT_LIST) else True
+            # debug ITEMS variable value
+#            if ARGS.verbose:
+#                history_log(os.getcwd(), 'ITEMS.txt', 'write', ITEMS)
+    
+            # measure time and set the program to wait 4 second between request
+            # as per reddit api guidelines
+            end_time = time.clock()
+    
+            if start_time is not None:
+                elapsed_time = end_time - start_time
+    
+                if elapsed_time <= 4:  # throttling
+                    time.sleep(4 - elapsed_time)
+    
+            start_time = time.clock()
+    
+            # No more items to process
+            if not ITEMS:
                 break
-        
-        # keep track of last id downloaded
-        LAST = ITEM['id'] if ITEM is not None else None
-        if LAST:
-            LOG_DATA[ARGS.reddit][ARGS.sort_type]['last-id'] = LAST
-            history_log(ARGS.dir, LOG_FILE, mode='write', write_data=LOG_DATA)
-        
+            
+            for ITEM in ITEMS:
+                TOTAL[0] += 1
+    
+                # not downloading if url is reddit comment
+                if ('reddit.com/r/' + ARGS.reddit + '/comments/' in ITEM['url'] or
+                        re.match(reddit_comment_regex, ITEM['url']) is not None):
+                    continue
+    
+                if ITEM['score'] < ARGS.score:
+                    if ARGS.verbose:
+                        print('    SCORE: {} has score of {}'.format(ITEM['id'], ITEM['score']))
+                        'which is lower than required score of {}.'.format(ARGS.score)
+    
+                    SKIPPED[0] += 1
+                    continue
+                elif ARGS.sfw and ITEM['over_18']:
+                    if ARGS.verbose:
+                        print('    NSFW: %s is marked as NSFW.' % (ITEM['id']))
+    
+                    SKIPPED[0] += 1
+                    continue
+                elif ARGS.nsfw and not ITEM['over_18']:
+                    if ARGS.verbose:
+                        print('    Not NSFW, skipping %s' % (ITEM['id']))
+    
+                    SKIPPED[0] += 1
+                    continue
+                elif ARGS.regex and not re.match(RE_RULE, ITEM['title']):
+                    if ARGS.verbose:
+                        print('    Regex match failed')
+    
+                    SKIPPED[0] += 1
+                    continue
+                elif ARGS.skipAlbums and 'imgur.com/a/' in ITEM['url']:
+                    if ARGS.verbose:
+                        print('    Album found, skipping %s' % (ITEM['id']))
+    
+                    SKIPPED[0] += 1
+                    continue
+    
+                if ARGS.title_contain and ARGS.title_contain.lower() not in ITEM['title'].lower():
+                    if ARGS.verbose:
+                        print('    Title not contain "{}",'.format(ARGS.title_contain))
+                        'skipping {}'.format(ITEM['id'])
+    
+                    SKIPPED[0] += 1
+                    continue
+    
+                FILECOUNT = 0
+                try:
+                    URLS = extract_urls(ITEM['url'])
+                except Exception:
+                    _log.exception("Failed to extract urls for %r", URLS)
+                    continue
+                for URL in URLS:
+                    try:
+                        # Find gfycat if requested
+                        if URL.endswith('gif') and ARGS.mirror_gfycat:
+                            check = gfycat().check(URL)
+                            if check.get("urlKnown"):
+                                URL = check.get('webmUrl')
+    
+                        # Trim any http query off end of file extension.
+                        FILEEXT = pathsplitext(URL)[1]
+                        if '?' in FILEEXT:
+                            FILEEXT = FILEEXT[:FILEEXT.index('?')]
+    
+                        # Only append numbers if more than one file
+                        FILENUM = ('_%d' % FILECOUNT if len(URLS) > 1 else '')
+    
+                        # create filename based on given input from user
+                        if ARGS.filename_format == 'url':
+                            FILENAME = '%s%s%s' % (pathsplitext(pathbasename(URL))[0], '', FILEEXT)
+                        elif ARGS.filename_format == 'title':
+                            FILENAME = '%s%s%s' % (slugify(ITEM['title']), FILENUM, FILEEXT)
+                            
+                            if len(FILENAME) >= 256:
+                                shortened_item_title = slugify(ITEM['title'])[:256-len(FILENAME)]
+                                FILENAME = '%s%s%s' % (shortened_item_title, FILENUM, FILEEXT)
+                        else:
+                            FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)                 
+                        
+                        # join file with directory
+                        FILEPATH = pathjoin(ARGS.dir, FILENAME)
+    
+                        # Improve debuggability list URL before download too.
+                        # url may be wrong so skip that
+                        if URL.encode('utf-8') == 'http://':
+                            raise URLError('Url is empty')
+    
+                        # Download the image
+                        try:
+                            if 'imgur.com' in URL:
+                                save_path=os.path.join(os.getcwd(), ARGS.dir)                          
+                                downloader=ImgurDownloader(URL, save_path, 
+                                                             remove_extension(FILENAME), 
+                                                             delete_dne=True, debug=False)
+                                downloader.save_images()
+                                print('Downloaded via jtara1/imgur-downloader')
+                            else:
+                                download_from_url(URL, FILEPATH)
+                                print('Downloaded via download_from_url(...)')
+                            # Image downloaded successfully!
+                            DOWNLOADED[0] += 1
+                            FILECOUNT += 1
+                                
+                        except Exception as e:
+                            print (e)
+                            ERRORS[0] += 1
+    
+                        if ARGS.num and DOWNLOADED[0] >= ARGS.num:
+                            print('    Download num limit reached, exiting.')
+                            FINISHED = True
+                            break
+                    except WrongFileTypeException as ERROR:
+                        _log_wrongtype(url=URL, target_dir=ARGS.dir,
+                                       filecount=FILECOUNT, _downloaded=DOWNLOADED[0],
+                                       filename=FILENAME)
+                        SKIPPED[0] += 1
+                    except FileExistsException as ERROR:
+                        ERRORS[0] += 1
+                        if ARGS.update:
+                            print('    Update complete, exiting.')
+                            FINISHED = True
+                            break
+                    except HTTPError as ERROR:
+                        FAILED[0] += 1
+                    except URLError as ERROR:
+                        FAILED[0] += 1
+                    except InvalidURL as ERROR:
+                        FAILED[0] += 1
+                    except Exception as exc:
+                        FAILED[0] += 1
+            
+                # keep track of last id downloaded
+                LAST = ITEM['id'] if ITEM is not None else None
+                if LAST:
+                    LOG_DATA[ARGS.reddit][ARGS.sort_type]['last-id'] = LAST
+                    history_log(ARGS.dir, LOG_FILE, mode='write', write_data=LOG_DATA)
+                
+                # break out of URL loop to end of ITEMS loop
+                if FINISHED:
+                    break
+            
         # update variables in PROG_REPORT
         for item in PROG_REPORT:
             item[1] += item[0]
-        
-        if ARGS.subreddit_list and TOTAL[1] - SKIPPED[1] >= ARGS.num:
-            SUBREDDIT_LIST_INDEX += 1
 
     print('Downloaded from {} reddit submissions'.format(DOWNLOADED[1]))
     print('(Processed {}, Skipped {}, Errors {})'.format(TOTAL[1], SKIPPED[1], ERRORS[1]))
