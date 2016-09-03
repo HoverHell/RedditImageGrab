@@ -1,5 +1,7 @@
 # jtara1's Todo
 
+* fix downloading from deviantart, tubmlr, pixiv.net, & other sites
+
 * cleanup and orgaize arguments
 
 * integrate subreddit_list support in getitems functions from ./redditdownload/reddit.py

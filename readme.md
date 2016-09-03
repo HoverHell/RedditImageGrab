@@ -39,8 +39,17 @@ subreddit and download them to a folder.
 # Requirements:
 
  * Python 3
+ * jtara1/imgur-downloader
  * Optional requirements: listed in setup.py under extras_require.
 
+# Installation:
+
+    git clone https://github.com/jtara1/RedditImageGrab.git
+    
+    cd RedditImageGrab
+
+    git clone https://github.com/jtara1/imgur-downloader.git ./redditdownload/imgur-downloader
+    
 
 # Usage:
 

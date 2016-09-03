@@ -430,7 +430,6 @@ def main(args):
     # value at first index is of current subreddit, second index is total
     TOTAL = DOWNLOADED = ERRORS = SKIPPED = FAILED = [0,0]
     PROG_REPORT = [TOTAL, DOWNLOADED, ERRORS, SKIPPED, FAILED]
-    print (PROG_REPORT)
 
     # Create the specified directory if it doesn't already exist.
     if not pathexists(ARGS.dir):
@@ -485,6 +484,8 @@ def main(args):
             history_log(ARGS.dir, LOG_FILE, 'write', LOG_DATA)
             if ARGS.verbose:
                 print ('Did not load last-id from %s file, created new %s' % (LOG_FILE, LOG_FILE))  
+        
+        TOTAL[0] = DOWNLOADED[0] = ERRORS[0] = SKIPPED[0] = FAILED[0] = 0        
         
         # begin the loop to get reddit items & download them                
         while not FINISHED:
@@ -658,9 +659,9 @@ def main(args):
                 if FINISHED:
                     break
             
-        # update variables in PROG_REPORT
-        for item in PROG_REPORT:
-            item[1] += item[0]
+            # update variables in PROG_REPORT in SUBREDDIT loop
+            for item in PROG_REPORT:
+                item[1] += item[0]
 
     print('Downloaded from {} reddit submissions'.format(DOWNLOADED[1]))
     print('(Processed {}, Skipped {}, Errors {})'.format(TOTAL[1], SKIPPED[1], ERRORS[1]))
