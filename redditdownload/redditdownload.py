@@ -157,8 +157,9 @@ def is_url_removed(image_url):
     """
     md5sum = get_remote_md5_sum(image_url)
     imgur_invalid_md5sum = 'd835884373f4d6c8f24742ceabe74946'
-    if md5sum == imgur_invalid_md5sum:
-        return True
+    if 'imgur.com/' in image_url:
+        if md5sum == imgur_invalid_md5sum:
+            return True
     else:
         return False
 
