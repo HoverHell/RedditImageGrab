@@ -181,6 +181,8 @@ def download_from_url(url, dest_file):
     # Don't download files multiple times!
     if pathexists(dest_file):
         raise FileExistsException('URL [%s] already downloaded.' % url)
+    if is_url_removed(url):
+        raise HTTPError('URL [{}] already removed.'.format(url))
 
     response = request(url)
     info = response.info()
