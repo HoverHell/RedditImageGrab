@@ -8,6 +8,8 @@ fresh and interesting. The main idea is that the script would download
 any JPEG or PNG formatted image that it found listed in the specified
 subreddit and download them to a folder.
 
+My work on this is put on hold while I work on building something similar in place.
+
 # jtara1 Fork
 
 ### Features and Changes:
@@ -29,9 +31,9 @@ subreddit and download them to a folder.
 * [\-\-subreddit\-list srl] cli argument added where srl is the filename containing list of subreddits to process
 
     * added ./redditdownload/parse\_subreddit\_list.py to process subreddit list for subreddit links & associated save location for each
-    
+
     * at this time, the same cli arguments are used for all subreddits in list, but save folder can be altered
-    
+
     * example subreddits.txt added, see parse\_subreddit\_list.py docstring for more info
 
 * updated progress report variables such as DOWNLOADED and ERRORS to accommodate for processing a list of subreddits
@@ -45,11 +47,11 @@ subreddit and download them to a folder.
 # Installation:
 
     git clone https://github.com/jtara1/RedditImageGrab.git
-    
+
     cd RedditImageGrab
 
     git clone https://github.com/jtara1/imgur-downloader.git ./redditdownload/imgur-downloader
-    
+
 
 # Usage:
 
@@ -68,14 +70,15 @@ ordering = ('key', )
 
 Downloads files with specified extension from the specified subreddit.
 
-positional arguments:
+main arguments:
 
-    <subreddit>           Subreddit name.
-    <dest_file>           Dir to put downloaded files in.
+    --reddit <subreddit>          Subreddit name.
+    --dir <dest_file>             Dir to put downloaded files in.
 
 optional arguments:
 
     -h, --help            show this help message and exit
+    --subbreddit-list srl Take a list of subreddits from a text file, srl = MySubreddit-list.txt
     --multireddit         Take multirredit instead of subreddit as input. If so,
                         provide /user/m/multireddit-name as argument
     --last l              ID of the last downloaded file.
