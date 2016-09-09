@@ -512,6 +512,13 @@ def main():
                         DOWNLOADED += 1
                         FILECOUNT += 1
 
+                    except FileExistsException,e:
+                        print '    %s' % (e)
+                        ERRORS += 1
+                        if ARGS.update:
+                            print '    Update complete, exiting.'
+                            FINISHED = True
+                            break
                     except Exception,e:
                         print '    %s' % str(e)
                         ERRORS += 1
