@@ -10,7 +10,7 @@ subreddit and download them to a folder.
 
 My work on this is put on hold while I work on building something similar in place.
 
-# jtara1 Fork
+## jtara1 Fork
 
 ### Features and Changes:
 
@@ -20,13 +20,14 @@ My work on this is put on hold while I work on building something similar in pla
 
     * added my fork (jtara1/imgur-downloader) to handle all imgur downloads (making the above feature possible)
 
+
 * fixed slugify function in redditdownload.py (which fixed \-\-filename-format cli argument)
 
 * file .\_history.txt contains reddit id of last downloaded and is identified by subreddit & ARGS.sort\_type, e.g.:
 
     > {'wallpapers': {'topmonth': {'last\-id': '4x4so2'}}}
 
-* positional arguments, <subreddit> and <dest\_file>, changed to optional cli arguments
+* positional arguments, \<subreddit\> and \<dest\_file\>, changed to optional cli arguments
 
 * [\-\-subreddit\-list srl] cli argument added where srl is the filename containing list of subreddits to process
 
@@ -38,13 +39,19 @@ My work on this is put on hold while I work on building something similar in pla
 
 * updated progress report variables such as DOWNLOADED and ERRORS to accommodate for processing a list of subreddits
 
-# Requirements:
+## Issues
+
+* Fails to download images from tumblr, deviant art, pixiv, & other sites
+* --num argument is not working properly
+* jtara1/imgur-downloader fails to remove imgur does not exist (dne) images
+
+## Requirements:
 
  * Python 3
  * jtara1/imgur-downloader
  * Optional requirements: listed in setup.py under extras_require.
 
-# Installation:
+## Installation:
 
     git clone https://github.com/jtara1/RedditImageGrab.git
 
@@ -53,7 +60,7 @@ My work on this is put on hold while I work on building something similar in pla
     git clone https://github.com/jtara1/imgur-downloader.git ./redditdownload/imgur-downloader
 
 
-# Usage:
+## Usage:
 
 See `./redditdl.py --help` for uptodate details.
 
@@ -97,7 +104,7 @@ optional arguments:
     --sort-type         Sort the subreddit.
 
 
-# Examples
+## Examples
 
 An example of running this script to download images with a score
 greater than 50 from the wallpaper sub-reddit into a folder called
@@ -116,7 +123,7 @@ doesn't exist yet) run:
     python redditdl.py cats ~/Pictures/catsfolder --score 1000 --num 5 --sfw --verbose
 
 
-## Advanced Examples
+### Advanced Examples
 
 Retrieve last 10 pics in the 'wallpaper' subreddit with the word
 "sunset" in the title (note: case is ignored by (?i) predicate)
@@ -128,7 +135,7 @@ Download top week post from subreddit 'animegifs' and use gfycat gif mirror (if 
 	python redditdl.py animegifs --sort-type topweek --mirror-gfycat
 
 
-## Sorting
+### Sorting
 
 Available sorting are following : hot, new, rising, controversial, top, gilded
 
