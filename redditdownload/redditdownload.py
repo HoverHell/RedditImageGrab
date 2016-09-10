@@ -15,8 +15,10 @@ from os.path import (
 from os import mkdir, getcwd
 import time
 from HTMLParser import HTMLParser
+
 from .gfycat import gfycat
 from .reddit import getitems
+from .remotemd5 import get_remote_md5_sum
 
 
 _log = logging.getLogger('redditdownload')
@@ -142,6 +144,26 @@ def extract_imgur_album_urls(album_url):
     return urls
 
 
+def is_url_removed(image_url):
+    """check if url is already removed and return invalid image.
+
+    this made to filter imgur remove image.
+
+    Args:
+        url (str): image url.
+
+    Returns:
+        bool: return true if url is already removed and false otherwise.
+    """
+    md5sum = get_remote_md5_sum(image_url)
+    imgur_invalid_md5sum = 'd835884373f4d6c8f24742ceabe74946'
+    if 'imgur.com/' in image_url:
+        if md5sum == imgur_invalid_md5sum:
+            return True
+    else:
+        return False
+
+
 def download_from_url(url, dest_file):
     """
     Attempt to download file specified by url to 'dest_file'
@@ -160,6 +182,8 @@ def download_from_url(url, dest_file):
     # Don't download files multiple times!
     if pathexists(dest_file):
         raise FileExistsException('URL [%s] already downloaded.' % url)
+    if is_url_removed(url):
+        raise HTTPError('URL [{}] already removed.'.format(url))
 
     response = request(url)
     info = response.info()
