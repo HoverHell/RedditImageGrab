@@ -1,4 +1,4 @@
-# jtara1's Todo
+## jtara1's todo
 
 * fix downloading from deviantart, tubmlr, pixiv.net, & other sites
 

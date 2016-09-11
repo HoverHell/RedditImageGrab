@@ -260,7 +260,7 @@ class ImgurDownloader:
 
 
     def urlretrieve_hook(self, trans_count, block_size, total_size):
-        """ hook for urllib.request.urlretrieve(...) function, upon download complete, check if image dne """
+        """ hook for urllib.request.urlretrieve(...), executed before file is written """
         pass
         # if (trans_count * block_size) >= total_size:
         #     pass

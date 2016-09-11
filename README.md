@@ -8,8 +8,6 @@ fresh and interesting. The main idea is that the script would download
 any JPEG or PNG formatted image that it found listed in the specified
 subreddit and download them to a folder.
 
-My work on this is put on hold while I work on building something similar in place.
-
 ## jtara1 Fork
 
 ### Features and Changes:
@@ -43,7 +41,6 @@ My work on this is put on hold while I work on building something similar in pla
 
 * Fails to download images from tumblr, deviant art, pixiv, & other sites
 * --num argument is not working properly
-* jtara1/imgur-downloader fails to remove imgur does not exist (dne) images
 
 ## Requirements:
 
