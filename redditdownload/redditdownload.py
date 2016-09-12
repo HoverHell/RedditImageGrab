@@ -430,7 +430,7 @@ def main(args):
     logging.basicConfig(level=logging.INFO)
 
     # value at first index is of current subreddit, second index is total
-    TOTAL = DOWNLOADED = ERRORS = SKIPPED = FAILED = [0,0]
+    TOTAL, DOWNLOADED, ERRORS, SKIPPED, FAILED =  [0,0], [0,0], [0,0], [0,0], [0,0]
     PROG_REPORT = [TOTAL, DOWNLOADED, ERRORS, SKIPPED, FAILED]
 
     # Create the specified directory if it doesn't already exist.
@@ -467,7 +467,7 @@ def main(args):
         FINISHED = False
 
         if ARGS.verbose:
-            print ('%s %s %s' % (INDEX, ARGS.reddit, ARGS.dir))
+            print ('INDEX: %s %s %s' % (INDEX, ARGS.reddit, ARGS.dir))
 
         # 2 vars used to keep track of reddit id's downloaded from
         LOG_FILE = '._history.txt'
@@ -487,19 +487,22 @@ def main(args):
             if ARGS.verbose:
                 print ('Did not load last-id from %s file, created new %s' % (LOG_FILE, LOG_FILE))
 
-        TOTAL[0] = DOWNLOADED[0] = ERRORS[0] = SKIPPED[0] = FAILED[0] = 0
+        TOTAL[0], DOWNLOADED[0], ERRORS[0], SKIPPED[0], FAILED[0], FILECOUNT = 0, 0, 0, 0, 0, 0
 
-        # begin the loop to get reddit items & download them
+        # ITEMS loop - begin the loop to get reddit submissions & download media from them
         while not FINISHED:
-            print()
+            if ARGS.verbose:
+                print()
+                # print('Begining ITEMS loop')
+                # print('LAST: %s' % LAST)
 
             ITEMS = getitems(
                 ARGS.reddit, multireddit=ARGS.multireddit, previd=LAST,
                 reddit_sort=sort_type)
 
             # debug ITEMS variable value
-#            if ARGS.verbose:
-#                history_log(os.getcwd(), 'ITEMS.txt', 'write', ITEMS)
+            if ARGS.verbose:
+               history_log(os.getcwd(), 'ITEMS.txt', 'write', ITEMS)
 
             # measure time and set the program to wait 4 second between request
             # as per reddit api guidelines
@@ -515,6 +518,8 @@ def main(args):
 
             # No more items to process
             if not ITEMS:
+                if ARGS.verbose:
+                    print('No more ITEMS for this subreddit of this sort_type')
                 break
 
             for ITEM in ITEMS:
@@ -565,7 +570,6 @@ def main(args):
                     SKIPPED[0] += 1
                     continue
 
-                FILECOUNT = 0
                 try:
                     URLS = extract_urls(ITEM['url'])
                 except Exception:
@@ -609,25 +613,28 @@ def main(args):
 
                         # Download the image
                         try:
+                            dl = skp = 0
                             if 'imgur.com' in URL:
                                 save_path=os.path.join(os.getcwd(), ARGS.dir)
                                 downloader=ImgurDownloader(URL, save_path,
                                                              remove_extension(FILENAME),
                                                              delete_dne=True, debug=False)
-                                downloader.save_images()
+                                (dl, skp) = downloader.save_images()
                                 print('Downloaded via jtara1/imgur-downloader')
                             else:
                                 download_from_url(URL, FILEPATH)
+                                dl = 1
                                 print('Downloaded via download_from_url(...)')
                             # Image downloaded successfully!
                             DOWNLOADED[0] += 1
+                            SKIPPED[0] += skp
                             FILECOUNT += 1
 
                         except Exception as e:
                             print (e)
                             ERRORS[0] += 1
 
-                        if ARGS.num and (DOWNLOADED[0]+DOWNLOADED[1]) > ARGS.num:
+                        if ARGS.num and (DOWNLOADED[0]) >= ARGS.num:
                             print('    Download num limit reached, exiting.')
                             FINISHED = True
                             break
@@ -662,11 +669,11 @@ def main(args):
                     break
 
             # update variables in PROG_REPORT in SUBREDDIT loop
-            for item in PROG_REPORT:
-                item[1] += item[0]
+            for var in PROG_REPORT:
+                var[1] += var[0]
 
-    print('Downloaded from {} reddit submissions'.format(DOWNLOADED[1]))
-    print('(Processed {}, Skipped {}, Errors {})'.format(TOTAL[1], SKIPPED[1], ERRORS[1]))
+    print('Downloaded from %i reddit submissions' % (DOWNLOADED[1]))
+    print('(Processed %i, Skipped %i, Errors %i)' % (TOTAL[1], SKIPPED[1], ERRORS[1]))
 
     return DOWNLOADED[1]
 

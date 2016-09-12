@@ -29,7 +29,7 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
                        'Check the multireddit flag. '
                        'Call --help for more info')
             print(warning)
-            sys.exit(1)                                                 
+            sys.exit(1)
         # no sorting needed
         if reddit_sort is None:
             url = 'http://www.reddit.com/r/{}.json'.format(subreddit)
@@ -72,14 +72,14 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
             sort_type = 'controversial'
 
         # check if url have already query
-        if '?' in url.split('/')[-1] and is_advanced_sort:
-            url += '&'
-        else:  # url dont have query yet
-            url += '?'
-
-        # add advanced sort
         if is_advanced_sort:
+            if '?' in url.split('/')[-1]:
+                url += '&'
+            else:  # url dont have query yet
+                url += '?'
             url += 'sort={}&t={}'.format(sort_type, sort_time_limit)
+
+        # print('REDDIT ITEMS URL: %s' url) # debug
 
     try:
         req = Request(url, headers=hdr)

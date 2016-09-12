@@ -203,6 +203,8 @@ class ImgurDownloader:
 
         dir_save = os.path.join(self.dir_download, albumFolder)
 
+        downloaded = skipped = 0
+
         if not os.path.exists(dir_save):
             os.makedirs(dir_save)
 
@@ -227,21 +229,26 @@ class ImgurDownloader:
             for fn in self.image_callbacks:
                 fn(counter, image_url, path)
 
-            self.direct_download(image_url, path)
+            dl, skp = self.direct_download(image_url, path)
+            downloaded += dl
+            skipped += skipped
 
         # Run the complete callbacks:
         for fn in self.complete_callbacks:
             fn()
 
         self.dne_file.close()
+        return downloaded, skipped
 
 
     def direct_download(self, image_url, path):
         """ download data from url and save to path
             & optionally check if img downloaded is imgur dne file
         """
+        dl, skp = 0, 0
         if os.path.isfile(path):
-            print ("Skipping, already exists.")
+            print ("[ImgurDownloader] Skipping, already exists.")
+            skp = 1
         else:
             try:
                 # check if image is imgur dne image before we download anything
@@ -250,13 +257,16 @@ class ImgurDownloader:
                     if self.are_files_equal(req, self.dne_file):
                         if self.debug:
                             print ('[ImgurDownloader] DNE: %s' % path.split('/')[-1])
-                        return
+                        return 0, 1
 
                 # proceed with downloading if image is not dne or we're not checking for dne images
                 urllib.request.urlretrieve(image_url, path)
+                dl = 1
             except Exception as e:
                 print('[ImgurDownloader] %s' % e)
                 os.remove(path)
+                skp = 1
+        return dl, skp
 
 
     def urlretrieve_hook(self, trans_count, block_size, total_size):
