@@ -80,8 +80,9 @@ class gfycat(object):
 
     def more(self, param):
         result = self.__fetch(self.url, "/cajax/get/%s" % param)
-        if "error" in result.json["gfyItem"]:
-            raise ValueError("%s" % self.json["gfyItem"]["error"])
+        # getting key error for 'gfyItem', commenting out for now ...
+        # if "error" in result.json["gfyItem"]:
+        #     raise ValueError("%s" % self.json["gfyItem"]["error"])
         return _gfycatMore(result)
 
     def check(self, param):

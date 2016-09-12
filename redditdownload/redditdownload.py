@@ -288,8 +288,13 @@ def extract_urls(url):
     if 'deviantart.com' in url:
         urls = process_deviant_url(url)
     elif 'gfycat.com' in url:
+        # this should handle fat.gfycat.com & zippy.gfycat.com links
+        if url.endswith('.webm') or url.endswith('.mp4'):
+            return [url]
+
         # choose the smallest file on gfycat
         gfycat_json = gfycat().more(url.split("gfycat.com/")[-1]).json()
+        # history_log(os.getcwd(), 'GFYCAT-JSON.txt', mode='write', write_data=gfycat_json) # debug
         if gfycat_json["mp4Size"] < gfycat_json["webmSize"]:
             urls = [gfycat_json["mp4Url"]]
         else:
@@ -572,8 +577,8 @@ def main(args):
 
                 try:
                     URLS = extract_urls(ITEM['url'])
-                except Exception:
-                    _log.exception("Failed to extract urls for %r", URLS)
+                except Exception as e:
+                    _log.exception("%s", e)
                     continue
                 for URL in URLS:
                     try:
@@ -620,12 +625,12 @@ def main(args):
                                                              remove_extension(FILENAME),
                                                              delete_dne=True, debug=False)
                                 (dl, skp) = downloader.save_images()
-                                print('Downloaded via jtara1/imgur-downloader')
                             else:
                                 download_from_url(URL, FILEPATH)
                                 dl = 1
-                                print('Downloaded via download_from_url(...)')
                             # Image downloaded successfully!
+                            if ARGS.verbose:
+                                print('Saved %s as %s' % (URL, FILENAME))
                             DOWNLOADED[0] += 1
                             SKIPPED[0] += skp
                             FILECOUNT += 1
