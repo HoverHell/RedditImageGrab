@@ -39,13 +39,12 @@ subreddit and download them to a folder.
 
 ## Issues
 
-* Fails to download images from tumblr, deviant art, pixiv, & other sites
-* --num argument is not working properly
+* Fails to download images from tumblr, deviant art, pixiv, instagram, & other sites
 
 ## Requirements:
 
  * Python 3
- * jtara1/imgur-downloader
+ * jtara1/imgur-downloader (already included in this repository)
  * Optional requirements: listed in setup.py under extras_require.
 
 ## Installation:
@@ -53,8 +52,6 @@ subreddit and download them to a folder.
     git clone https://github.com/jtara1/RedditImageGrab.git
 
     cd RedditImageGrab
-
-    git clone https://github.com/jtara1/imgur-downloader.git ./redditdownload/imgur-downloader
 
 
 ## Usage:
