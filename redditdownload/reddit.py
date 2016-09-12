@@ -44,7 +44,7 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
 
     # Get items after item with 'id' of previd.
 
-    hdr = {'User-Agent': 'jtara1 fork RedditImageGrab script.'}
+    hdr = {'User-Agent': 'RedditImageGrab script.'}
 
     # here where is query start
     # query for previd comment

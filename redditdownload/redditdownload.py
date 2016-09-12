@@ -170,7 +170,7 @@ def download_from_url(url, dest_file):
     """
     # Don't download files multiple times!
     if pathexists(dest_file):
-        raise FileExistsException('URL [%s] already downloaded.' % url)
+        raise FileExistsException('%s already downloaded.' % dest_file.split('/')[-1])
 
     response = request(url)
     info = response.info()
