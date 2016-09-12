@@ -39,28 +39,25 @@ class TestMainMethod(unittest.TestCase):
     @patch('redditdownload.redditdownload.download_from_url')
     @patch('redditdownload.redditdownload.getitems', side_effect=[get_mock_items(),{}])
     def test_update_flag(self, mock_get_items, mock_download_func):
-        """test update flag."""
-        mock_argv = patch.object(
-            sys, 'argv', ['redditdl.py', 'cats', '--num', '2', '--update']
-        )
-        #start patch
-        mock_argv.start()
-        # run the main function.
-        redditdownload.main()
+        """test update flag.
+        
+        it test if update flag is raised properly and if get_items func will call twice,
+        because download_func only raise FileExistsException."""
+        test_argv = ['redditdl.py', 'cats', '--num', '2', '--update']
+        with patch.object(sys, 'argv', test_argv):
+            # run the main function.
+            redditdownload.main()
 
-        # assert the call count
-        assert mock_get_items.call_count == 1
-        assert mock_download_func.call_count == 2
+            # assert the call count
+            assert mock_get_items.call_count == 1
+            assert mock_download_func.call_count == 2
 
-        # change side effect to raise error
-        err_txt = 'Expected Error on testing'
-        mock_download_func.side_effect = redditdownload.FileExistsException(err_txt)
-        # run the main func.
-        redditdownload.main()
+            # change side effect to raise error
+            err_txt = 'Expected Error on testing'
+            mock_download_func.side_effect = redditdownload.FileExistsException(err_txt)
+            # run the main func.
+            redditdownload.main()
 
-        # assert the call count
-        assert mock_get_items.call_count == 2
-        assert mock_download_func.call_count == 2
-        # stop patch
-        mock_argv.stop
-
+            # assert the call count
+            assert mock_get_items.call_count == 2
+            assert mock_download_func.call_count == 2
