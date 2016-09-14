@@ -2,7 +2,11 @@
 
 * fix downloading from deviantart, tubmlr, pixiv.net, & other sites
 
-* cleanup and orgaize arguments
+* record metadata in database
+
+* integrate youtube-dl module to handle all video links
+
+* cleanup and organize cli arguments
 
 * integrate subreddit_list support in getitems functions from ./redditdownload/reddit.py
 

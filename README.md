@@ -21,13 +21,11 @@ subreddit and download them to a folder.
     * added my fork (jtara1/imgur-downloader) to handle all imgur downloads (making the above feature possible)
 
 
-* fixed slugify function in redditdownload.py (which fixed \-\-filename-format cli argument)
-
 * file .\_history.txt contains reddit id of last downloaded and is identified by subreddit & ARGS.sort\_type, e.g.:
 
     > {'wallpapers': {'topmonth': {'last\-id': '4x4so2'}}}
 
-* positional arguments, \<subreddit\> and \<dest\_file\>, changed to optional cli arguments
+* positional arguments, \<subreddit\> and \<dest\_file\>, changed to optional cli arguments (see Usage)
 
 * [\-\-subreddit\-list srl] cli argument added where srl is the filename containing list of subreddits to process
 
@@ -38,6 +36,14 @@ subreddit and download them to a folder.
     * example subreddits.txt added, see [parse\_subreddit\_list.py](https://github.com/jtara1/RedditImageGrab/blob/master-python3/redditdownload/parse_subreddit_list.py) docstring for more info
 
 * updated progress report variables such as DOWNLOADED and ERRORS to accommodate for processing a list of subreddits
+
+### Fixes:
+
+* slugify function in redditdownload.py (which fixed \-\-filename-format cli argument)
+
+* [extract_urls function](https://github.com/jtara1/RedditImageGrab/blob/master-python3/redditdownload/redditdownload.py#L282) and gfycat.py failed to download direct links to .webm & .mp4 files
+
+* [gfycat](https://github.com/jtara1/RedditImageGrab/blob/master-python3/redditdownload/gfycat.py) failed to process gfycat links that did not exists
 
 ## Issues
 
