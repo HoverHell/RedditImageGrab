@@ -12,7 +12,9 @@ subreddit and download them to a folder.
 
 ### Features and Changes:
 
-* Adapted to Python 3 by merge from [ohyou/RedditImageGrab](https://github.com/ohyou/RedditImageGrab) & function slugify(...) fix
+
+
+* Adapted to Python 3 mostly by merge from [ohyou/RedditImageGrab](https://github.com/ohyou/RedditImageGrab) along with some additional fixes
 
 * \-\-num cli argument now counts by reddit submission rather than individual image
 
@@ -29,11 +31,11 @@ subreddit and download them to a folder.
 
 * [\-\-subreddit\-list srl] cli argument added where srl is the filename containing list of subreddits to process
 
-    * added ./redditdownload/parse\_subreddit\_list.py to process subreddit list for subreddit links & associated save location for each
+    * added [./redditdownload/parse\_subreddit\_list.py](https://github.com/jtara1/RedditImageGrab/blob/master-python3/redditdownload/parse_subreddit_list.py) to process subreddit list for subreddit links & associated save location for each
 
     * at this time, the same cli arguments are used for all subreddits in list, but save folder can be altered
 
-    * example subreddits.txt added, see parse\_subreddit\_list.py docstring for more info
+    * example subreddits.txt added, see [parse\_subreddit\_list.py](https://github.com/jtara1/RedditImageGrab/blob/master-python3/redditdownload/parse_subreddit_list.py) docstring for more info
 
 * updated progress report variables such as DOWNLOADED and ERRORS to accommodate for processing a list of subreddits
 
@@ -79,7 +81,7 @@ main arguments:
 optional arguments:
 
     -h, --help            show this help message and exit
-    --subbreddit-list srl Take a list of subreddits from a text file, srl = MySubreddit-list.txt
+    --subbreddit-list srl Take a list of subreddits from a text file, srl = subreddits.txt
     --multireddit         Take multirredit instead of subreddit as input. If so,
                         provide /user/m/multireddit-name as argument
     --last l              ID of the last downloaded file.
