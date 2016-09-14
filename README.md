@@ -25,7 +25,14 @@ subreddit and download them to a folder.
 
     > {'wallpapers': {'topmonth': {'last\-id': '4x4so2'}}}
 
-* positional arguments, \<subreddit\> and \<dest\_file\>, changed to optional cli arguments (see Usage)
+* positional arguments, \<subreddit\> and \<dest\_file\>, changed to optional cli arguments
+
+    *    positional arguments changed
+
+    *    --dir is required
+
+    *    [--reddit ] or [--subreddit-list srl] is required
+
 
 * [\-\-subreddit\-list srl] cli argument added where srl is the filename containing list of subreddits to process
 
