@@ -110,6 +110,10 @@ class FileExistsException(Exception):
     """Exception raised when file exists in specified directory"""
 
 
+class URLDNEException(Exception):
+    """ Exception raised when URL does not exist """
+
+
 def extract_imgur_album_urls(album_url):
     """
     Given an imgur album URL, attempt to extract the images within that
@@ -293,12 +297,12 @@ def extract_urls(url):
             return [url]
 
         # choose the smallest file on gfycat
-        gfycat_json = gfycat().more(url.split("gfycat.com/")[-1]).json()
+        gfy_json = gfycat().more(url.split("gfycat.com/")[-1]).json()
         # history_log(os.getcwd(), 'GFYCAT-JSON.txt', mode='write', write_data=gfycat_json) # debug
-        if gfycat_json["mp4Size"] < gfycat_json["webmSize"]:
-            urls = [gfycat_json["mp4Url"]]
+        if gfy_json["mp4Size"] < gfy_json["webmSize"]:
+            urls = [gfy_json["mp4Url"]]
         else:
-            urls = [gfycat_json["webmUrl"]]
+            urls = [gfy_json["webmUrl"]]
     else:
         urls = [url]
 
@@ -577,6 +581,9 @@ def main(args):
 
                 try:
                     URLS = extract_urls(ITEM['url'])
+                except URLError as e:
+                    print('URLError %s' % e)
+                    continue
                 except Exception as e:
                     _log.exception("%s", e)
                     continue
