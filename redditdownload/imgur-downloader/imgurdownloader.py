@@ -3,15 +3,13 @@
 
 
 """
-imguralbum.py - Download a whole imgur album in one go.
+imgurdownloader.py - Download a whole imgur album in one go.
 
 Provides both a class and a command line utility in a single script
 to download Imgur albums.
 
 MIT License
 Copyright Alex Gisby <alex@solution10.com>
-
-Fork Created Aug. 2016 by jtara1
 """
 
 
@@ -23,14 +21,14 @@ import math
 import time
 from collections import Counter
 
-help_message = """
-Quickly and easily download an album from Imgur.
+__doc__ = """
+Quickly and easily download images from Imgur.
 
 Format:
-    $ python imguralbum.py [album URL] [destination folder]
+    $ python3 imgurdownloader.py [album URL] [destination folder]
 
 Example:
-    $ python imguralbum.py http://imgur.com/a/uOOju#6 /Users/alex/images
+    $ python3 imgurdownloader.py http://imgur.com/a/uOOju#6 /Users/alex/images
 
 If you omit the dest folder name, the utility will create one with the same name
 as the album
@@ -45,23 +43,20 @@ class ImgurException(Exception):
 
 
 class ImgurDownloader:
-    def __init__(self, album_url, dir_download=os.getcwd(), file_name='', delete_dne=True, debug=False):
+    def __init__(self, imgur_url, dir_download=os.getcwd(), file_name='',
+                delete_dne=True, debug=False):
         """
-        Constructor. Pass in the album_url that you want to download.
-        ARGUMENTS:
-            album_url   : url of imgur gallery, album, single img, or direct url of image
+        Constructor. Pass in the imgur_url that you want to download.
+        Arguments:
+            imgur_url: url of imgur gallery, album, single img, or direct url of image
             dir_download: core directory for location to save_images(...), (path passed in save_images(...) out prioritizes this one)
-            file_name   : name of folder containing images from album or name of single image (depending on album_url)
+            file_name: name of folder containing images from album or name of single image (depending on imgur_url)
                           if file_name given, it prioritizes over webpage title and imgur key
-            debug       : if True, prints several variables throughout __init__(...)
-        TODO:
-            1. Regex used to get self.album_title (OS may not save acceptable characters in html in file names)
-            3. Get individual image titles if provided (note: this is located in _item: {...}; section of html alongside image keys/hashes and extensions)
-            4. Support downloading of an imgur user's entire album collection
+            debug: if True, prints several variables throughout __init__(...)
         """
         (self.dir_root, tail) = os.path.split(__file__)
 
-        self.album_url = album_url
+        self.imgur_url = imgur_url
         self.dir_download = dir_download # directory to save image(s)
 
         self.delete_dne = delete_dne
@@ -72,37 +67,32 @@ class ImgurDownloader:
         self.complete_callbacks = []
 
         # Check the URL is actually imgur:
-        match = re.match("(https?)\:\/\/(www\.)?(i\.|m\.)?imgur\.com(/a|/gallery|/)/?([a-zA-Z0-9]+)(#[0-9]+)?(.\w*)?", album_url)
+        match = re.match(
+            "(https?)\:\/\/(www\.)?(i\.|m\.)?imgur\.com/([a|gallery|r]?)/?([\w_]*)/?([\w_]*)(#[0-9]+)?(.\w*)?",
+            imgur_url)
         if not match:
             raise ImgurException("URL must be a valid Imgur Album")
 
         self.protocol = match.group(1)
-        self.domain_prefix = match.group(3)
-        self.imgur_link_type = match.group(4)
-        if self.imgur_link_type == "/":
-            self.is_album = False
-        else:
-            self.is_album = True
-        self.album_key = match.group(5) # despite var name, this can refer to image key depending on album_url passed
-        self.image_extension = match.group(7)
+        domain_prefix = match.group(3)
+
+        imgur_link_type = match.group(4)
+
+        # key is also referred to as hash in raw HTML
+        self.main_key = match.group(5) if imgur_link_type != 'r' else match.group(6)
+        image_extension = match.group(8)
 
         if self.debug:
-            print ("album key: " + self.album_key) # debug
-            print ("is_album: " + str(self.is_album)) # debug
+            print ("main key: " + self.main_key) # debug
 
-        if self.domain_prefix and self.image_extension:
-            self.album_title = self.album_key if file_name == '' else file_name
-            self.imageIDs = [(self.album_key, self.image_extension)]
+        # handle direct image links
+        if domain_prefix and image_extension:
+            self.album_title = self.main_key if file_name == '' else file_name
+            self.imageIDs = [(self.main_key, image_extension)]
             return
 
-        if self.is_album:
-            # Read the no-script version of the page for all the images:
-            fullListURL = "http://imgur.com/a/" + self.album_key + "/layout/blog"
-        elif not self.is_album:
-            fullListURL = album_url
-
         try:
-            self.response = urllib.request.urlopen(url=fullListURL)
+            self.response = urllib.request.urlopen(url=imgur_url)
             response_code = self.response.getcode()
         except Exception as e:
             self.response = False
@@ -115,12 +105,12 @@ class ImgurDownloader:
         html = self.response.read().decode('utf-8')
 
         # default album_title
-        self.album_title = self.album_key
+        self.album_title = self.main_key
         if file_name == '':
             # search for album / image title of webpage
             search = re.search("<title>\s*(.*) - (?:Album on )*?Imgur", html)
             if search:
-                self.album_title = search.group(1) + ' (' + self.album_key + ')'
+                self.album_title = search.group(1) + ' (' + self.main_key + ')'
         elif file_name != '':
             self.album_title = file_name
 
@@ -131,7 +121,7 @@ class ImgurDownloader:
         search = re.search('(_item:.*?};)', html, flags=re.DOTALL)
         if search:
             self.imageIDs = re.findall('.*?"hash":"([a-zA-Z0-9]+)".*?"ext":"(\.[a-zA-Z0-9]+)".*?', search.group(1))
-            if len(self.imageIDs) > 1 and self.imageIDs[0][0] == self.album_key:
+            if len(self.imageIDs) > 1 and self.imageIDs[0][0] == self.main_key:
                 self.imageIDs.remove(self.imageIDs[0]) # removes the first element in imageIDs since this'll could be the album_key if this link has more than 1 img
 
         if self.debug:
@@ -157,12 +147,12 @@ class ImgurDownloader:
         return self.cnt.most_common()
 
 
-    def album_key(self):
+    def get_album_key(self):
         """
         Returns the key of this album. Helpful if you plan on generating your own
         folder names.
         """
-        return self.album_key
+        return self.main_key
 
 
     def on_image_download(self, callback):
@@ -183,7 +173,7 @@ class ImgurDownloader:
         self.complete_callbacks.append(callback)
 
 
-    def save_images(self, foldername=False):
+    def save_images(self, foldername=None):
         """
         Saves the images from the album into a folder given by foldername.
         If no foldername is given, it'll use the cwd and the album key.
@@ -266,6 +256,10 @@ class ImgurDownloader:
         """ download data from url and save to path
             & optionally check if img downloaded is imgur dne file
         """
+        def are_files_equal(file1, file2):
+            """ given two file objects, checks to see if their bytes are equal """
+            return True if bytearray(file1.read()) == bytearray(file2.read()) else False
+
         dl, skp = 0, 0
         if os.path.isfile(path):
             print ("[ImgurDownloader] Skipping, already exists.")
@@ -275,7 +269,7 @@ class ImgurDownloader:
                 # check if image is imgur dne image before we download anything
                 if self.delete_dne:
                     req = urllib.request.urlopen(image_url)
-                    if self.are_files_equal(req, self.dne_file):
+                    if are_files_equal(req, self.dne_file):
                         if self.debug:
                             print ('[ImgurDownloader] DNE: %s' % path.split('/')[-1])
                         return 0, 1
@@ -290,13 +284,6 @@ class ImgurDownloader:
         return dl, skp
 
 
-    def urlretrieve_hook(self, trans_count, block_size, total_size):
-        """ hook for urllib.request.urlretrieve(...), executed before file is written """
-        pass
-        # if (trans_count * block_size) >= total_size:
-        #     pass
-
-
     def is_imgur_dne_image(self, img_path):
         """ takes full image path & checks if bytes are equal to that of imgur does not exist image """
         dne_img = os.path.join(self.dir_root, 'imgur-dne.png') # edit location if needed
@@ -304,48 +291,8 @@ class ImgurDownloader:
             dne_data = bytearray(f.read())
         with open(img_path, 'rb') as f:
             data = bytearray(f.read())
-        # print('data_size %i data_dne_size %i' % (len(data), len(dne_data))) # the print that told me all
-        if data == dne_data:
-            return True
-        else:
-            return False
+        return True if data == dne_data else False
 
-
-    def are_files_equal(self, file1, file2):
-        """ given two file objects, checks to see if their bytes are equal """
-        if bytearray(file1.read()) == bytearray(file2.read()):
-            return True
-        else:
-            return False
-
-    def get_extension(self, path):
-        """ Returns extension found in URL or PATH by locating image file extension """
-
-        exts = ['.png', '.jpg', '.mp4', 'webm', '.jpeg', '.jfif', '.gif', 'gifv',
-                '.bmp', '.tif', '.tiff', '.webp', '.bpg', '.bat',
-                '.heif', '.exif', '.ppm', '.cgm', '.svg']
-
-        for e in exts:
-            ext_index = path.find(e)
-            if ext_index != -1:
-                return e
-        if ext_index == -1: # no ext found in path
-            return ''
-
-    def remove_extension(self, path):
-        """ Returns filename found in path by locating image file extension """
-
-        exts = ['.png', '.jpg', '.mp4', 'webm', '.jpeg', '.jfif', '.gif', 'gifv',
-                '.bmp', '.tif', '.tiff', '.webp', '.bpg', '.bat',
-                '.heif', '.exif', '.ppm', '.cgm', '.svg']
-
-        for e in exts:
-            ext_index = path.find(e)
-            if ext_index != -1:
-                break
-        if ext_index == -1: # no ext found in path
-            return path
-        return path[:ext_index]
 
 
 if __name__ == '__main__':
@@ -353,7 +300,7 @@ if __name__ == '__main__':
 
     if len(args) == 1:
         # Print out the help message and exit:
-        print (help_message)
+        print (__doc__)
         exit()
 
     try:
@@ -392,5 +339,5 @@ if __name__ == '__main__':
         print ("")
         print ("How to use")
         print ("=============")
-        print (help_message)
+        print (__doc__)
         exit(1)
