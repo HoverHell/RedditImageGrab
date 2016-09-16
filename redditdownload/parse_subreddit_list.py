@@ -32,29 +32,30 @@ import os
 from os import getcwd, mkdir
 
 def parse_subreddit_list(file_path, root_path=''):
-    """ 
+    """
         INPUT: file (full path) of list of subreddits, & root_path for root save location
         OUTPUT: list of tuples with full subreddit url and save path (see docstring on line 1 for e.g.)
     """
-    try:    
+    try:
         file = open(file_path, 'r')
-    except Exception as e:
+    except IOError as e:
         print(e)
-        
+        raise IOError
+
     output = []
-    
+
     folder_regex = re.compile('([a-zA-Z0-9_\- ]*):\n')
     subreddit_regex = re.compile('(?:https?://)?(?:www.)?reddit.com/r/([a-zA-Z0-9_]*)')
     subreddit_regex2 = re.compile('(?:/r/)?([a-zA-Z0-9_]*)')
-    
+
     if root_path != '':
         folder_path = root_path
     elif root_path == '':
         folder_path = getcwd()
-    
+
     if not os.path.isdir(folder_path):
         mkdir(folder_path)
-        
+
     # iterate through the lines using regex to check if line is subreddit or folder title
     path = folder_path
     for line in file:
@@ -69,7 +70,7 @@ def parse_subreddit_list(file_path, root_path=''):
             else:
                 path = folder_path
             continue
-        
+
         subreddit_match = re.match(subreddit_regex, line)
         if not subreddit_match:
             subreddit_match = re.match(subreddit_regex2, line)
@@ -77,11 +78,11 @@ def parse_subreddit_list(file_path, root_path=''):
                 print('No match at position %s' % file.tell() )
                 print('parse_subreddit_list Error: No match found, skipping this iteration.')
                 continue
-            
-        subreddit = subreddit_match.group(1)                
+
+        subreddit = subreddit_match.group(1)
         final_path = os.path.join(path, subreddit)
         if not os.path.isdir(final_path):
             mkdir(final_path)
-        output.append((subreddit, final_path))                
-        
+        output.append((subreddit, final_path))
+
     return output

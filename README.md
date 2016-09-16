@@ -21,26 +21,20 @@ subreddit and download them to a folder.
     * added my fork (jtara1/imgur-downloader) to handle all imgur downloads (making the above feature possible)
 
 
-* file .\_history.txt contains reddit id of last downloaded and is identified by subreddit & ARGS.sort\_type, e.g.:
+* file `._history.txt` contains reddit id of last downloaded and is identified by `subreddit` & `ARGS.sort_type`, e.g.:
 
     > {'wallpapers': {'topmonth': {'last\-id': '4x4so2'}}}
 
-* positional arguments, \<subreddit\> and \<dest\_file\>, changed to optional cli arguments
-
-    *    positional arguments changed
-
-    *    --dir is required
-
-    *    [--reddit ] or [--subreddit-list srl] is required
+* positional argument, `<subreddit>`, can now autodetect whether value points to subreddit name or subreddit list file
 
 
 * [\-\-subreddit\-list srl] cli argument added where srl is the filename containing list of subreddits to process
 
-    * added [./redditdownload/parse\_subreddit\_list.py](https://github.com/jtara1/RedditImageGrab/blob/master-python3/redditdownload/parse_subreddit_list.py) to process subreddit list for subreddit links & associated save location for each
+    * added `parse_subreddit_list.py` to process subreddit list for subreddit links & associated save location for each
 
     * at this time, the same cli arguments are used for all subreddits in list, but save folder can be altered
 
-    * example subreddits.txt added, see [parse\_subreddit\_list.py](https://github.com/jtara1/RedditImageGrab/blob/master-python3/redditdownload/parse_subreddit_list.py) docstring for more info
+    * examples for subreddits.txt added, in folder `subreddit-list-examples`
 
 * updated progress report variables such as DOWNLOADED and ERRORS to accommodate for processing a list of subreddits
 
@@ -59,7 +53,6 @@ subreddit and download them to a folder.
 ## Requirements:
 
  * Python 3
- * jtara1/imgur-downloader (already included in this repository)
  * Optional requirements: listed in setup.py under extras_require.
 
 ## Installation:
@@ -88,8 +81,8 @@ Downloads files with specified extension from the specified subreddit.
 
 main arguments:
 
-    --reddit <subreddit>          Subreddit name.
-    --dir <dest_file>             Dir to put downloaded files in.
+    subreddit <subreddit>       Subreddit or subreddit list file name.
+    dir <dest_file>             Dir to put downloaded files in.
 
 optional arguments:
 
@@ -119,29 +112,29 @@ An example of running this script to download images with a score
 greater than 50 from the wallpaper sub-reddit into a folder called
 wallpaper would be as follows:
 
-    python redditdl.py wallpaper wallpaper --score 50
+    python3 redditdl.py wallpaper wallpaper --score 50
 
 And to run the same query but only get new images you don't already
 have, run the following:
 
-    python redditdl.py wallpaper wallpaper --score 50 -update
+    python3 redditdl.py wallpaper wallpaper --score 50 -update
 
 For getting some nice pictures of cats in your catsfolder (wich will be created if it
 doesn't exist yet) run:
 
-    python redditdl.py cats ~/Pictures/catsfolder --score 1000 --num 5 --sfw --verbose
+    python3 redditdl.py cats ~/Pictures/catsfolder --score 1000 --num 5 --sfw --verbose
 
 
 ### Advanced Examples
 
-Retrieve last 10 pics in the 'wallpaper' subreddit with the word
+Retrieve pics from last 10 submission in the 'wallpaper' subreddit with the word
 "sunset" in the title (note: case is ignored by (?i) predicate)
 
-    python redditdl.py wallpaper sunsets --regex '(?i).*sunset.*' --num 10
+    python3 redditdl.py wallpaper sunsets --regex '(?i).*sunset.*' --num 10
 
 Download top week post from subreddit 'animegifs' and use gfycat gif mirror (if available)
 
-	python redditdl.py animegifs --sort-type topweek --mirror-gfycat
+	python3 redditdl.py animegifs --sort-type topweek --mirror-gfycat
 
 
 ### Sorting

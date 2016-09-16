@@ -6,6 +6,7 @@ import os
 import re
 import io
 import sys
+import json
 import logging
 from urllib.request import urlopen
 from urllib.error import HTTPError, URLError
@@ -21,7 +22,7 @@ from html.parser import HTMLParser
 from .gfycat import gfycat
 from .reddit import getitems
 sys.path.append(os.path.join(os.path.dirname(__file__), 'imgur-downloader'))
-from imguralbum import ImgurDownloader
+from imgurdownloader import ImgurDownloader
 from .parse_subreddit_list import parse_subreddit_list
 
 
@@ -96,7 +97,7 @@ _WRONGDATA_LOGFILE = os.environ.get('WRONGDATA_LOGFILE')
 def _log_wrongtype(_logfile=_WRONGDATA_LOGFILE, **kwa):
     if not _logfile:
         return
-    import json
+
     data = json.dumps(kwa) + "\n"
     with open(_logfile, 'a', 1) as f:
         f.write(data)
@@ -335,48 +336,40 @@ def remove_extension(mystr):
     return mystr
 
 
-def history_log(wdir, file_log, mode='read', write_data={}):
-    '''
-    DESCRIPTION:
-        1. if mode == 'read' then it tries to read the file, file_log located in wdir returning a dictionary of the text
-            if that fails, it returns an emtpy dictionary
-        2. elif mode == 'write' it creates (or overwrites) the file, file_log, located in wdir with write_data
-        3. elif mode == 'append' create file_log if not avail and append write_data
-        This function does not create wdir
-    PARAMETERS:
-        wdir:       string - directory to save to. can refer to full path or just folder name as long as it exists
-        file_log:   string - file to save to
-        mode:       string - 'read' or 'write', see description above
-        write_data: any    - only relevant if mode == 'write', output is converted to string and written to file_log
-    '''
-    path = os.path.join(os.getcwd(), wdir) if not os.path.isdir(wdir) else wdir
-    if mode == 'read':
-        try:
-            with open(os.path.join(path, file_log), 'r') as f:
-                data = f.read()
-                return eval(data)
-        except IOError:
-                return {}
-    elif mode == 'write':
-        with open(os.path.join(path, file_log), 'w') as f:
-            f.write(str(write_data))
-            return True
-    elif mode == 'append':
-        with open(os.path.join(path, file_log), 'a') as f:
-            f.write(str(write_data))
-            return True
+def history_log(wdir=os.getcwd(), log_file='log_file.txt', mode='read', write_data=None):
+    """Read or write python dictionary from or to a text file
+
+    :param wdir: directory for text file to be saved to
+    :param log_file: name of text file (include .txt extension)
+    :param mode: 'read' or 'write' are valid
+    :param write_data: data that'll get written in the log_file
+    :type write_data: dictionary
+
+    .. note:: Big thanks to https://github.com/rachmadaniHaryono for helping cleanup & fix security of this function.
+    """
+    mode_dict = {
+        'read': 'r',
+        'write': 'w',
+        'append': 'a'
+    }
+    if mode in mode_dict:
+        with open(os.path.join(wdir, log_file), mode_dict[mode]) as f:
+            if mode == 'read':
+                return json.loads(f.read())
+            else:
+                f.write(json.dumps(write_data))
+                return True
     else:
-        print ('Error in historyLog func: invalid mode')
-        return False
+        logging.debug('history_log func: invalid mode')
 
 
 def parse_args(args):
     PARSER = ArgumentParser(description='Downloads files with specified extension'
                             'from the specified subreddit.')
-    PARSER.add_argument('--reddit', metavar='<subreddit>', default='', type=str,
-                        help='Subreddit name.', required=False)
-    PARSER.add_argument('--dir', metavar='<dest_file>', nargs='?', default=getcwd(),
-                        help='Dir to put downloaded files in.', required=False)
+    PARSER.add_argument('subreddit', metavar='<subreddit>',
+                        help='Subreddit or subreddit list file name.')
+    PARSER.add_argument('dir', metavar='<dest_file>', nargs='?',
+                        default=getcwd(), help='Dir to put downloaded files in.')
     PARSER.add_argument('--multireddit', default=False, action='store_true',
                         required=False,
                         help='Take multirredit instead of subreddit as input.'
@@ -434,7 +427,6 @@ def parse_reddit_argument(reddit_args):
 
 def main(args):
     ARGS = parse_args(args if len(args)>0 else sys.argv[1:])
-#    ARGS.verbose = False
 
     logging.basicConfig(level=logging.INFO)
 
@@ -461,40 +453,46 @@ def main(args):
     if sort_type:
         sort_type = sort_type.lower()
 
+    # check to see if ARGS.subreddit is subreddit or subreddit-list
+    if os.path.isfile(ARGS.subreddit) and os.path.splitext(ARGS.subreddit)[1] != '':
+        print('I see a srl')
+        ARGS.subreddit_list = ARGS.subreddit
+
     if ARGS.subreddit_list:
-        ARGS.subreddit_list = ARGS.subreddit_list[0]
-        SUBREDDIT_FILE = os.path.join(os.getcwd(), ARGS.subreddit_list)
-        SUBREDDIT_LIST = parse_subreddit_list(SUBREDDIT_FILE, ARGS.dir)
+        # ARGS.subreddit_list = ARGS.subreddit_list[0] # can't remember why I did this -jtara1
+        subreddit_file = ARGS.subreddit_list
+        print('subreddit_file: %s' % (subreddit_file))
+        subreddit_list = parse_subreddit_list(subreddit_file, ARGS.dir)
         if ARGS.verbose:
-            print('SUBREDDIT_LIST = %s' % SUBREDDIT_LIST)
+            print('subreddit_list = %s' % subreddit_list)
     elif not ARGS.subreddit_list:
-        SUBREDDIT_LIST = [(ARGS.reddit, ARGS.dir)]
+        subreddit_list = [(ARGS.subreddit, ARGS.dir)]
 
     # iterate through subreddit(s)
-    for INDEX, SECTION in enumerate(SUBREDDIT_LIST):
-        (ARGS.reddit, ARGS.dir) = SECTION
+    for index, section in enumerate(subreddit_list):
+        (ARGS.subreddit, ARGS.dir) = section
         FINISHED = False
 
         if ARGS.verbose:
-            print ('INDEX: %s %s %s' % (INDEX, ARGS.reddit, ARGS.dir))
+            print ('index: %s %s %s' % (index, ARGS.subreddit, ARGS.dir))
 
-        # 2 vars used to keep track of reddit id's downloaded from
-        LOG_FILE = '._history.txt'
-        LOG_DATA = history_log(ARGS.dir, LOG_FILE, 'read')
+        # this file will keep track of last-id of sort_type of subreddit downloaded from
+        log_file = '._history.txt'
         try:
-            LAST = LOG_DATA[ARGS.reddit][ARGS.sort_type]['last-id']
+            log_data = history_log(ARGS.dir, log_file, 'read')
+            last_id = log_data[ARGS.subreddit][ARGS.sort_type]['last-id']
         except Exception as e:
-            LAST = ''
-            LOG_DATA = {
-                ARGS.reddit: {
+            last_id = ''
+            log_data = {
+                ARGS.subreddit: {
                     ARGS.sort_type: {
                         'last-id': ''
                     }
                 }
             }
-            history_log(ARGS.dir, LOG_FILE, 'write', LOG_DATA)
+            history_log(ARGS.dir, log_file, 'write', log_data)
             if ARGS.verbose:
-                print ('Did not load last-id from %s file, created new %s' % (LOG_FILE, LOG_FILE))
+                print ('Did not load last-id from %s file, created new %s' % (log_file, log_file))
 
         TOTAL[0], DOWNLOADED[0], ERRORS[0], SKIPPED[0], FAILED[0], FILECOUNT = 0, 0, 0, 0, 0, 0
 
@@ -503,10 +501,10 @@ def main(args):
             if ARGS.verbose:
                 print()
                 # print('Begining ITEMS loop')
-                # print('LAST: %s' % LAST)
+                # print('last_id: %s' % last_id)
 
             ITEMS = getitems(
-                ARGS.reddit, multireddit=ARGS.multireddit, previd=LAST,
+                ARGS.subreddit, multireddit=ARGS.multireddit, previd=last_id,
                 reddit_sort=sort_type)
 
             # debug ITEMS variable value
@@ -528,14 +526,15 @@ def main(args):
             # No more items to process
             if not ITEMS:
                 if ARGS.verbose:
-                    print('No more ITEMS for this subreddit of this sort_type')
+                    print('No more ITEMS for this %s of this %s' %
+                            (ARGS.subreddit, ARGS.sort_type))
                 break
 
             for ITEM in ITEMS:
                 TOTAL[0] += 1
 
                 # not downloading if url is reddit comment
-                if ('reddit.com/r/' + ARGS.reddit + '/comments/' in ITEM['url'] or
+                if ('reddit.com/r/' + ARGS.subreddit + '/comments/' in ITEM['url'] or
                         re.match(reddit_comment_regex, ITEM['url']) is not None):
                     continue
 
@@ -670,11 +669,11 @@ def main(args):
                     except Exception as exc:
                         FAILED[0] += 1
 
-                # keep track of last id downloaded
-                LAST = ITEM['id'] if ITEM is not None else None
-                if LAST:
-                    LOG_DATA[ARGS.reddit][ARGS.sort_type]['last-id'] = LAST
-                    history_log(ARGS.dir, LOG_FILE, mode='write', write_data=LOG_DATA)
+                # keep track of last_id id downloaded
+                last_id = ITEM['id'] if ITEM is not None else None
+                if last_id:
+                    log_data[ARGS.subreddit][ARGS.sort_type]['last-id'] = last_id
+                    history_log(ARGS.dir, log_file, mode='write', write_data=log_data)
 
                 # break out of URL loop to end of ITEMS loop
                 if FINISHED:
