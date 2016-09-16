@@ -104,6 +104,7 @@ optional arguments:
                         Specify filename format: reddit (default), title or
                         url
     --sort-type         Sort the subreddit.
+    --restart           Begin downloading from beginning of subreddit rather than resuming from last dl subreddit submission.
 
 
 ## Examples

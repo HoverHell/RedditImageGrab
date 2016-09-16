@@ -402,6 +402,8 @@ def parse_args(args):
     PARSER.add_argument('--mirror-gfycat', default=False, action='store_true', required=False,
                         help='Download available mirror in gfycat.com.')
     PARSER.add_argument('--sort-type', default=None, help='Sort the subreddit.')
+    PARSER.add_argument('--restart', default=False, required=False, action='store_true',
+                        help='Begin downloading from beginning of subreddit.')
 
     # TODO fix if regex, title contain activated
 
@@ -455,13 +457,11 @@ def main(args):
 
     # check to see if ARGS.subreddit is subreddit or subreddit-list
     if os.path.isfile(ARGS.subreddit) and os.path.splitext(ARGS.subreddit)[1] != '':
-        print('I see a srl')
         ARGS.subreddit_list = ARGS.subreddit
 
     if ARGS.subreddit_list:
         # ARGS.subreddit_list = ARGS.subreddit_list[0] # can't remember why I did this -jtara1
         subreddit_file = ARGS.subreddit_list
-        print('subreddit_file: %s' % (subreddit_file))
         subreddit_list = parse_subreddit_list(subreddit_file, ARGS.dir)
         if ARGS.verbose:
             print('subreddit_list = %s' % subreddit_list)
@@ -476,11 +476,14 @@ def main(args):
         if ARGS.verbose:
             print ('index: %s %s %s' % (index, ARGS.subreddit, ARGS.dir))
 
-        # this file will keep track of last-id of sort_type of subreddit downloaded from
         log_file = '._history.txt'
+        # get last reddit id downloaded & resume from there unless cli --restart passed
         try:
             log_data = history_log(ARGS.dir, log_file, 'read')
-            last_id = log_data[ARGS.subreddit][ARGS.sort_type]['last-id']
+            if ARGS.restart:
+                last_id = ''
+            elif not ARGS.restart:
+                last_id = log_data[ARGS.subreddit][ARGS.sort_type]['last-id']
         except Exception as e:
             last_id = ''
             log_data = {
