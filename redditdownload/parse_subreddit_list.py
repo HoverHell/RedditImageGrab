@@ -5,8 +5,10 @@ Created on Tue Aug 30 15:26:13 2016
 @author: jtara1
 
 General syntax for subreddits.txt:
-: (color character) denotes folder name
+: (colon character) denotes folder name
 subreddit url or word denotes subreddit
+
+For more examples see https://github.com/jtara1/RedditImageGrab/commit/8e4787ef9ac43ca694fc663be026f69a568bb622
 
 Example of expected input and output:
 
@@ -14,27 +16,34 @@ subreddits.txt = "
 pc-wallpapers:
 https://www.reddit.com/r/wallpapers/
 /r/BackgroundArt/
+
 nature_pics:
 http://www.reddit.com/r/EarthPorn/
+
 :
 Mountain
 "
 
-parse_subreddit_list('/path/to/subreddits.txt') = [
-('wallpapers', '/folder_path/pc-wallpaper/wallpapers'),
-('BackgroundArt', '/folder_path/pc-wallpaper/BackgroundArt'),
-('EarthPorn', '/folder_path/nature-pics/EarthPorn'),
-('Mountain', '/folder_path/Mountain')
+parse_subreddit_list('/MyPath/subreddits.txt', '/MyPath/') = [
+('wallpapers', '/MyPath/pc-wallpaper/wallpapers'),
+('BackgroundArt', '/MyPath/pc-wallpaper/BackgroundArt'),
+('EarthPorn', '/MyPath/nature-pics/EarthPorn'),
+('Mountain', '/MyPath/Mountain')
 ]
 """
+
 import re
 import os
 from os import getcwd, mkdir
 
-def parse_subreddit_list(file_path, root_path=''):
-    """
-        INPUT: file (full path) of list of subreddits, & root_path for root save location
-        OUTPUT: list of tuples with full subreddit url and save path (see docstring on line 1 for e.g.)
+def parse_subreddit_list(file_path, base_path=getcwd()):
+    """Gets list of subreddits from a file & returns folder for media from each subreddit
+
+    :param file_path: path of text file to load subreddits from (relative or full path)
+    :param base_path: base path that gets returned with each subreddit
+
+    :return: list containing tuples of subreddit & its associated folder to get media saved to
+    :rtype: list
     """
     try:
         file = open(file_path, 'r')
@@ -48,27 +57,22 @@ def parse_subreddit_list(file_path, root_path=''):
     subreddit_regex = re.compile('(?:https?://)?(?:www.)?reddit.com/r/([a-zA-Z0-9_]*)')
     subreddit_regex2 = re.compile('(?:/r/)?([a-zA-Z0-9_]*)')
 
-    if root_path != '':
-        folder_path = root_path
-    elif root_path == '':
-        folder_path = getcwd()
-
-    if not os.path.isdir(folder_path):
-        mkdir(folder_path)
+    if not os.path.isdir(base_path):
+        mkdir(base_path)
 
     # iterate through the lines using regex to check if line is subreddit or folder title
-    path = folder_path
+    path = base_path
     for line in file:
         if line == '\n':
             continue
         folder_match = re.match(folder_regex, line)
         if folder_match:
             if folder_match.group(1) != '':
-                path = os.path.join(folder_path, line[:-2])
+                path = os.path.join(base_path, line[:-2])
                 if not os.path.isdir(path):
                     mkdir(path)
             else:
-                path = folder_path
+                path = base_path
             continue
 
         subreddit_match = re.match(subreddit_regex, line)
