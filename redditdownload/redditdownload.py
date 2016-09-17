@@ -503,8 +503,8 @@ def main(args=None):
                 reddit_sort=sort_type)
 
             # debug ITEMS variable value
-            if ARGS.verbose:
-               history_log(os.getcwd(), 'ITEMS.txt', 'write', ITEMS)
+            # if ARGS.verbose:
+            #    history_log(os.getcwd(), 'ITEMS.txt', 'write', ITEMS)
 
             # measure time and set the program to wait 4 second between request
             # as per reddit api guidelines
@@ -521,7 +521,7 @@ def main(args=None):
             # No more items to process
             if not ITEMS:
                 if ARGS.verbose:
-                    print('No more ITEMS for this %s of this %s' %
+                    print('No more ITEMS for %s %s' %
                             (ARGS.subreddit, ARGS.sort_type))
                 break
 
@@ -531,6 +531,11 @@ def main(args=None):
                 # not downloading if url is reddit comment
                 if ('reddit.com/r/' + ARGS.subreddit + '/comments/' in ITEM['url'] or
                         re.match(reddit_comment_regex, ITEM['url']) is not None):
+                    # hotfix for when last item is comment submission which caused infinite looping
+                    last_id = ITEM['id'] if ITEM is not None else None
+                    if last_id:
+                        log_data[ARGS.subreddit][ARGS.sort_type]['last-id'] = last_id
+                        history_log(ARGS.dir, log_file, mode='write', write_data=log_data)
                     continue
 
                 if ITEM['score'] < ARGS.score:
