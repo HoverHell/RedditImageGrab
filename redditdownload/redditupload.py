@@ -11,11 +11,7 @@ import requests
 def download(url, filename=None, dl_dir=None, default_ext='.jpg'):
     """download from reddit uploads.
 
-    it work for following domain:
-
-        - i.redditmedia.com
-        - i.reddituploads.com
-
+    see :func:`match` which reddit upload format is supported.
     Args:
         url (str): url to be downloaded.
         filename (str): target filename.
@@ -23,6 +19,10 @@ def download(url, filename=None, dl_dir=None, default_ext='.jpg'):
         default_ext (str): default extension if no extension if given in url.
     """
     # assume filename is not given, filename is invalid or empty.
+    default_user_agent = (
+        'Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) '
+        'Ubuntu Chromium/52.0.2743.116 Chrome/52.0.2743.116 Safari/537.36')
+    cookies = {'User-Agent': default_user_agent}
     if not filename:
         filename = None
     # process filename if not given.
@@ -32,7 +32,7 @@ def download(url, filename=None, dl_dir=None, default_ext='.jpg'):
         basename = path.splitext(basename)[0] + file_ext
         filename = path.join(dl_dir, basename) if dl_dir is not None else basename
     # downlod the url.
-    r = requests.get(url, stream=True)
+    r = requests.get(url, stream=True, cookies=cookies)
     if r.status_code == 200:
         with open(filename, 'wb') as f:
             r.raw.decode_content = True
@@ -42,6 +42,12 @@ def download(url, filename=None, dl_dir=None, default_ext='.jpg'):
 def match(url):
     """return true or false if url match this module uploader.
 
+    it support following domain:
+
+        - i.redditmedia.com
+        - i.reddituploads.com
+        - i.redd.it
+
     Args:
         url (str): url to be matched.
     Returns:
@@ -50,6 +56,7 @@ def match(url):
     parts = [
         'i.redditmedia.com',
         'i.reddituploads.com',
+        'i.redd.it',
     ]
     for part in parts:
         if part in url:
