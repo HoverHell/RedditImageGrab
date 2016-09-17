@@ -325,13 +325,16 @@ def slugify(value):
 
 
 def history_log(wdir=os.getcwd(), log_file='log_file.txt', mode='read', write_data=None):
-    """Read or write python dictionary from or to a text file
+    """Read python dictionary from or write python dictionary to a file
 
     :param wdir: directory for text file to be saved to
     :param log_file: name of text file (include .txt extension)
-    :param mode: 'read' or 'write' are valid
+    :param mode: 'read', 'write', or 'append' are valid
     :param write_data: data that'll get written in the log_file
-    :type write_data: dictionary
+    :type write_data: dictionary (or list or set)
+
+    :return: returns data read from or written to file (depending on mode)
+    :rtype: dictionary
 
     .. note:: Big thanks to https://github.com/rachmadaniHaryono for helping cleanup & fix security of this function.
     """
@@ -346,9 +349,10 @@ def history_log(wdir=os.getcwd(), log_file='log_file.txt', mode='read', write_da
                 return json.loads(f.read())
             else:
                 f.write(json.dumps(write_data))
-                return True
+                return write_data
     else:
-        logging.debug('history_log func: invalid mode')
+        logging.debug('history_log func: invalid mode (param #3)')
+        return {}
 
 
 def parse_args(args):
@@ -415,7 +419,7 @@ def parse_reddit_argument(reddit_args):
         return 'Downloading images from "%s" subreddit' % (', '.join(reddit_args.split('+')))
 
 
-def main(args):
+def main(args=None):
     ARGS = parse_args(args if len(args)>0 else sys.argv[1:])
 
     logging.basicConfig(level=logging.INFO)

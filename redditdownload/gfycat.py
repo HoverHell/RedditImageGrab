@@ -1,5 +1,10 @@
 from collections import namedtuple
-
+import urllib.request, urllib.error, urllib.parse
+from urllib.error import URLError
+import json
+import random
+import string
+import requests
 
 class gfycat(object):
 
@@ -23,8 +28,6 @@ class gfycat(object):
         super(gfycat, self).__init__()
 
     def __fetch(self, url, param):
-        import urllib.request, urllib.error, urllib.parse
-        import json
         try:
             # added simple User-Ajent string to avoid CloudFlare block this request
             headers = {'User-Agent': 'Mozilla/5.0'}
@@ -36,8 +39,6 @@ class gfycat(object):
         return result(raw=connection, json=json.loads(connection.decode('ascii')))
 
     def upload(self, param):
-        import random
-        import string
         # gfycat needs to get a random string before our search parameter
         randomString = ''.join(random.choice
             (string.ascii_uppercase + string.digits) for _ in range(5))
@@ -55,9 +56,6 @@ class gfycat(object):
 
     def __fileHandler(self, file):
         # Thanks thesourabh for the implementation
-        import random
-        import string
-        import requests
         # gfycat needs a random key before upload
         key = ''.join(random.choice
             (string.ascii_uppercase + string.digits) for _ in range(10))
@@ -82,7 +80,6 @@ class gfycat(object):
         result = self.__fetch(self.url, "/cajax/get/%s" % param)
         try:
             if result.json['error']:
-                from urllib.error import URLError
                 raise URLError('%s%s%s' % ('DNE: ', 'http://gfycat.com/', param))
         except KeyError:
             pass # no error reported in json
@@ -121,7 +118,6 @@ class _gfycatUtils(object):
             return ("Sorry, can't find %s" % error)
 
     def download(self, location):
-        import urllib.request, urllib.error, urllib.parse
         if not location.endswith(".mp4"):
             location = location + self.get("gfyName") + ".mp4"
         try:
@@ -140,7 +136,6 @@ class _gfycatUtils(object):
             raise ValueError(err.read())
 
     def formated(self, ignoreNull=False):
-            import json
             if not ignoreNull:
                 return json.dumps(self.js, indent=4,
                     separators=(',', ': ')).strip('{}\n')
