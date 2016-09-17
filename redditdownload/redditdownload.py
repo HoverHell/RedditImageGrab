@@ -15,8 +15,10 @@ from os.path import (
 from os import mkdir, getcwd
 import time
 from HTMLParser import HTMLParser
+
 from .gfycat import gfycat
 from .reddit import getitems
+from . import redditupload
 
 
 _log = logging.getLogger('redditdownload')
@@ -161,6 +163,10 @@ def download_from_url(url, dest_file):
     if pathexists(dest_file):
         raise FileExistsException('URL [%s] already downloaded.' % url)
 
+    # use redditupload costum downloader if url match
+    if redditupload.match(url):
+        redditupload.download(url, dest_file)
+        return None
     response = request(url)
     info = response.info()
 
