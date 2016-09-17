@@ -1,5 +1,10 @@
 from collections import namedtuple
-
+import urllib.request, urllib.error, urllib.parse
+from urllib.error import URLError
+import json
+import random
+import string
+import requests
 
 class gfycat(object):
 
@@ -23,21 +28,17 @@ class gfycat(object):
         super(gfycat, self).__init__()
 
     def __fetch(self, url, param):
-        import urllib2
-        import json
         try:
             # added simple User-Ajent string to avoid CloudFlare block this request
             headers = {'User-Agent': 'Mozilla/5.0'}
-            req = urllib2.Request(url+param, None, headers)
-            connection = urllib2.urlopen(req).read()
-        except urllib2.HTTPError, err:
+            req = urllib.request.Request(url+param, None, headers)
+            connection = urllib.request.urlopen(req).read()
+        except urllib.error.HTTPError as err:
             raise ValueError(err.read())
         result = namedtuple("result", "raw json")
-        return result(raw=connection, json=json.loads(connection))
+        return result(raw=connection, json=json.loads(connection.decode('ascii')))
 
     def upload(self, param):
-        import random
-        import string
         # gfycat needs to get a random string before our search parameter
         randomString = ''.join(random.choice
             (string.ascii_uppercase + string.digits) for _ in range(5))
@@ -55,9 +56,6 @@ class gfycat(object):
 
     def __fileHandler(self, file):
         # Thanks thesourabh for the implementation
-        import random
-        import string
-        import requests
         # gfycat needs a random key before upload
         key = ''.join(random.choice
             (string.ascii_uppercase + string.digits) for _ in range(10))
@@ -80,8 +78,11 @@ class gfycat(object):
 
     def more(self, param):
         result = self.__fetch(self.url, "/cajax/get/%s" % param)
-        if "error" in result.json["gfyItem"]:
-            raise ValueError("%s" % self.json["gfyItem"]["error"])
+        try:
+            if result.json['error']:
+                raise URLError('%s%s%s' % ('DNE: ', 'http://gfycat.com/', param))
+        except KeyError:
+            pass # no error reported in json
         return _gfycatMore(result)
 
     def check(self, param):
@@ -117,14 +118,13 @@ class _gfycatUtils(object):
             return ("Sorry, can't find %s" % error)
 
     def download(self, location):
-        import urllib2
         if not location.endswith(".mp4"):
             location = location + self.get("gfyName") + ".mp4"
         try:
             # added simple User-Ajent string to avoid CloudFlare block this request
             headers = {'User-Agent': 'Mozilla/5.0'}
-            req = urllib2.Request(self.get("mp4Url"), None, headers)
-            file = urllib2.urlopen(req)
+            req = urllib.request.Request(self.get("mp4Url"), None, headers)
+            file = urllib.request.urlopen(req)
             # make sure that the status code is 200, and the content type is mp4
             if int(file.code) is not 200 or file.headers["content-type"] != "video/mp4":
                 raise ValueError("Problem downlading the file. Status code is %s or the content-type is not right %s"
@@ -132,11 +132,10 @@ class _gfycatUtils(object):
             data = file.read()
             with open(location, "wb") as mp4:
                 mp4.write(data)
-        except urllib2.HTTPError, err:
+        except urllib.error.HTTPError as err:
             raise ValueError(err.read())
 
     def formated(self, ignoreNull=False):
-            import json
             if not ignoreNull:
                 return json.dumps(self.js, indent=4,
                     separators=(',', ': ')).strip('{}\n')

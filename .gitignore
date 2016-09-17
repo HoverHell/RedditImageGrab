@@ -1,11 +1,14 @@
 */*.jpg
+*/*.png
+*/*.webm
+*/*.mp4
 *.swp
 *.bak
 *.DS_Store
 *.sh
 *.pyc
 /.idea
-
+venv/*
 
 /.project
 /*~
@@ -13,3 +16,5 @@
 /gfycat
 /build
 /.pydevproject
+
+cli.txt

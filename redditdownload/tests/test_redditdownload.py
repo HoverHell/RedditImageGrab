@@ -3,6 +3,7 @@
 
 import unittest
 from unittest import TestCase
+import os, sys
 from os import getcwd
 
 from redditdownload import parse_args, process_deviant_url, process_imgur_url

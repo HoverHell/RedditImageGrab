@@ -1,0 +1,12 @@
+top-subreddits:
+https://www.reddit.com/r/pics
+funny
+/r/aww
+https://www.reddit.com/r/gifs
+http://www.reddit.com/r/EarthPorn
+
+Nature Pictures:
+https://www.reddit.com/r/BotanicalPorn
+https://www.reddit.com/r/WaterPorn
+https://www.reddit.com/r/SeaPorn
+https://www.reddit.com/r/SkyPorn

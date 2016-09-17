@@ -10,11 +10,11 @@ import sys
 import re
 import json
 import logging
-import urlparse
+import urllib.parse
 import traceback
 
 from PIL import Image
-from cStringIO import StringIO
+from io import StringIO
 import lxml
 import html5lib  # Heavily recommended for bs4 (apparently)
 import bs4
@@ -52,7 +52,7 @@ def indexall_re(topstr, substr_re):
 def walker(text, opening='{', closing='}'):
     """ A near-useless experiment that was intended for `get_all_objects` """
     stack = []
-    for pos in xrange(len(text)):
+    for pos in range(len(text)):
         if text[pos:pos + len(opening)] == opening:
             stack.append(pos)
             continue
@@ -88,7 +88,7 @@ def get_all_objects(text, beginning=r'{', debug=False):
     """
 
     def _dbg_actual(st, *ar):
-        print "D: ", st % ar
+        print("D: ", st % ar)
 
     _dbg = _dbg_actual if debug else (lambda *ar: None)
 
@@ -106,9 +106,9 @@ def get_all_objects(text, beginning=r'{', debug=False):
     class TheLoader(yaml.SafeLoader):
         ESCAPE_REPLACEMENTS = ddd(yaml.SafeLoader.ESCAPE_REPLACEMENTS)
 
-    from cStringIO import StringIO
+    from io import StringIO
     # optimised slicing
-    if isinstance(text, unicode):
+    if isinstance(text, str):
         _dbg("encoding")
         text = text.encode('utf-8')
     _dbg("Length: %r", len(text))
@@ -214,13 +214,13 @@ def get_get_get(url, **kwa):
 
 def get_get(*ar, **kwa):
     retries = kwa.pop('_xretries', 5)
-    for retry in xrange(retries):
+    for retry in range(retries):
         try:
             return get_get_get(*ar, **kwa)
         except Exception as exc:
             traceback.print_exc()
             ee = exc
-            print "On retry #%r   (%s)" % (retry, repr(exc)[:30])
+            print("On retry #%r   (%s)" % (retry, repr(exc)[:30]))
     raise GetError(ee)
 
 
@@ -244,7 +244,7 @@ def get(url, cache_file=None, req_params=None, bs=True, response=False, undecode
             for chunk in resp.iter_content(chunk_size=16384):
                 data += chunk
                 if len(data) > _max_len:
-                    print "Too large"
+                    print("Too large")
                     break
             data = bytes(data)  ## Have to, alas.
             data_bytes = data
@@ -274,7 +274,7 @@ def _filter(l):
 
 
 def _url_abs(l, base_url):
-    return (urlparse.urljoin(base_url, v) for v in l)
+    return (urllib.parse.urljoin(base_url, v) for v in l)
 
 
 def _preprocess_bs_links(bs, links):
@@ -413,7 +413,7 @@ def do_horrible_things(url=url2, do_horrible_thing_func=do_horrible_thing, urls_
                for val in lst
                if val.startswith('http') or val.startswith('/')]
         # (urljoin should be done already though)
-        return [urlparse.urljoin(url, val) for val in res]
+        return [urllib.parse.urljoin(url, val) for val in res]
 
     imgs, links = bs2img(bs), bs2lnk(bs)
     to_check = imgs + links
