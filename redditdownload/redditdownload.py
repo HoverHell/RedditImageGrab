@@ -22,7 +22,7 @@ from html.parser import HTMLParser
 from .gfycat import gfycat
 from .reddit import getitems
 sys.path.append(os.path.join(os.path.dirname(__file__), 'imgur-downloader'))
-from imgurdownloader import ImgurDownloader
+from imgurdownloader import ImgurDownloader, ImgurException
 from .parse_subreddit_list import parse_subreddit_list
 
 
@@ -324,18 +324,6 @@ def slugify(value):
     return value
 
 
-def remove_extension(mystr):
-    """ Returns filename found in mystr by locating image file extension """
-    exts = ['.png', '.jpg', 'webm', '.jpeg', '.jfif', '.gif', 'gifv', '.bmp',
-            '.tif', '.tiff', '.webp', '.bpg', '.bat',
-            '.heif', '.exif', '.ppm', '.cgm', '.svg']
-    for e in exts:
-        ext_index = mystr.find(e)
-        if ext_index != -1:
-            return mystr[:ext_index]
-    return mystr
-
-
 def history_log(wdir=os.getcwd(), log_file='log_file.txt', mode='read', write_data=None):
     """Read or write python dictionary from or to a text file
 
@@ -374,8 +362,8 @@ def parse_args(args):
                         required=False,
                         help='Take multirredit instead of subreddit as input.'
                         'If so, provide /user/m/multireddit-name as argument')
-    PARSER.add_argument('--subreddit-list', metavar='srl', default=False, type=str,
-                        required=False, nargs=1,
+    PARSER.add_argument('--subreddit-list', metavar='srl-filename', default=False,
+                        type=str, required=False, nargs=1,
                         help='name of text file containing list of subreddits')
     PARSER.add_argument('--last', metavar='l', default='', required=False,
                         help='ID of the last downloaded file.')
@@ -629,10 +617,13 @@ def main(args):
                         try:
                             dl = skp = 0
                             if 'imgur.com' in URL:
+                                fname = os.path.splitext(FILENAME)[0]
                                 save_path=os.path.join(os.getcwd(), ARGS.dir)
-                                downloader=ImgurDownloader(URL, save_path,
-                                                             remove_extension(FILENAME),
-                                                             delete_dne=True, debug=False)
+                                downloader=ImgurDownloader(URL,
+                                                            save_path,
+                                                            fname,
+                                                            delete_dne=True,
+                                                            debug=False)
                                 (dl, skp) = downloader.save_images()
                             else:
                                 download_from_url(URL, FILEPATH)
@@ -644,6 +635,8 @@ def main(args):
                             SKIPPED[0] += skp
                             FILECOUNT += 1
 
+                        except ImgurException as e:
+                            ERRORS[0] += 1
                         except Exception as e:
                             print (e)
                             ERRORS[0] += 1

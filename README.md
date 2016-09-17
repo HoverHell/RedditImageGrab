@@ -18,7 +18,7 @@ subreddit and download them to a folder.
 
 * \-\-num cli argument now counts by reddit submission rather than individual image
 
-    * added my fork (jtara1/imgur-downloader) to handle all imgur downloads (making the above feature possible)
+    * added submodule `imgur-downloader` which enabled the above feature among other things
 
 
 * file `._history.txt` contains reddit id of last downloaded and is identified by `subreddit` & `ARGS.sort_type`, e.g.:
@@ -28,9 +28,9 @@ subreddit and download them to a folder.
 * positional argument, `<subreddit>`, can now autodetect whether value points to subreddit name or subreddit list file
 
 
-* [\-\-subreddit\-list srl] cli argument added where srl is the filename containing list of subreddits to process
+* `--subreddit-list srl-filename` cli argument added where srl is the filename containing list of subreddits to process
 
-    * added `parse_subreddit_list.py` to process subreddit list for subreddit links & associated save location for each
+    * added function to process subreddit list for subreddit links & associated save location for each
 
     * at this time, the same cli arguments are used for all subreddits in list, but save folder can be altered
 
@@ -38,29 +38,24 @@ subreddit and download them to a folder.
 
 * updated progress report variables such as DOWNLOADED and ERRORS to accommodate for processing a list of subreddits
 
+* `--restart` cli arg added which begins downloading from the beginning of the subreddit rather than resuming from last download ID.
+
 ### Fixes:
 
-* slugify function in redditdownload.py (which fixed \-\-filename-format cli argument)
+* `--filename-format` cli arg should work as expected
 
-* [extract_urls function](https://github.com/jtara1/RedditImageGrab/blob/master-python3/redditdownload/redditdownload.py#L282) and gfycat.py failed to download direct links to .webm & .mp4 files
+* `gfycat.py` failed to download direct links to .webm & .mp4 files
 
-* [gfycat](https://github.com/jtara1/RedditImageGrab/blob/master-python3/redditdownload/gfycat.py) failed to process gfycat links that did not exists
+* `gfycat.py` failed to process gfycat links that did not exist
 
 ## Issues
 
-* Fails to download images from tumblr, deviant art, pixiv, instagram, & other sites
+* needs more testing
 
 ## Requirements:
 
  * Python 3
  * Optional requirements: listed in setup.py under extras_require.
-
-## Installation:
-
-    git clone https://github.com/jtara1/RedditImageGrab.git
-
-    cd RedditImageGrab
-
 
 ## Usage:
 
@@ -87,7 +82,8 @@ main arguments:
 optional arguments:
 
     -h, --help            show this help message and exit
-    --subbreddit-list srl Take a list of subreddits from a text file, srl = subreddits.txt
+    --subbreddit-list srl-filename
+                          Take a list of subreddits from a text file, srl = subreddits.txt
     --multireddit         Take multirredit instead of subreddit as input. If so,
                         provide /user/m/multireddit-name as argument
     --last l              ID of the last downloaded file.
@@ -101,8 +97,7 @@ optional arguments:
     --skipAlbums          Skip all albums
     --mirror-gfycat       Download available mirror in gfycat.com.
     --filename-format FILENAME_FORMAT
-                        Specify filename format: reddit (default), title or
-                        url
+                        Specify filename format: reddit (default), title or url
     --sort-type         Sort the subreddit.
     --restart           Begin downloading from beginning of subreddit rather than resuming from last dl subreddit submission.
 

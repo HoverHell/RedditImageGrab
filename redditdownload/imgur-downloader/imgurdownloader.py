@@ -264,6 +264,7 @@ class ImgurDownloader:
         if os.path.isfile(path):
             print ("[ImgurDownloader] Skipping, already exists.")
             skp = 1
+            raise ImgurException(IOError)
         else:
             try:
                 # check if image is imgur dne image before we download anything
@@ -278,9 +279,10 @@ class ImgurDownloader:
                 urllib.request.urlretrieve(image_url, path)
                 dl = 1
             except Exception as e:
-                print('[ImgurDownloader] %s' % e)
+                # print('[ImgurDownloader] %s' % e)
                 os.remove(path)
                 skp = 1
+                raise ImgurException(e)
         return dl, skp
 
 

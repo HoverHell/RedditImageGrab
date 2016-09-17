@@ -1,7 +1,7 @@
-## jtara1's todo
+## todo
 
-* fix downloading from deviantart, tubmlr, pixiv.net, & other sites
+* fix downloading from deviantart, tubmlr, pixiv.net, instagram & other sites
 
-* record metadata in database
+* record metadata (submission link & comments, local file location) in database
 
 * integrate youtube-dl module to handle all video links
