@@ -71,14 +71,13 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
             sort_time_limit = reddit_sort[13:]
             sort_type = 'controversial'
 
-        # check if url have already query
-        if '?' in url.split('/')[-1] and is_advanced_sort:
-            url += '&'
-        else:  # url dont have query yet
-            url += '?'
-
-        # add advanced sort
         if is_advanced_sort:
+            # check if url have already query
+            if '?' in url.split('/')[-1]:
+                url += '&'
+            else:  # url dont have query yet
+                url += '?'
+            # add advanced sort
             url += 'sort={}&t={}'.format(sort_type, sort_time_limit)
 
     try:
