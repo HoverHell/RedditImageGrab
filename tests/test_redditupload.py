@@ -50,7 +50,7 @@ class TestDownloadMethods(unittest.TestCase):
             # check mock open
             assert not m.called
             # check mock_get
-            mock_get.assert_called_once_with(self.url, stream=True)
+            mock_get.assert_called_once_with(self.url, cookies=mock_ANY, stream=True)
             assert not mock_get.return_value.raw.decode_content
             # check if copyfileobj is not called
             assert not mock_copyfileobj.called
@@ -67,7 +67,7 @@ class TestDownloadMethods(unittest.TestCase):
             # check mock open
             m.assert_called_once_with(self.url_filename, 'wb')
             # check mock_get
-            mock_get.assert_called_once_with(self.url, stream=True)
+            mock_get.assert_called_once_with(self.url, cookies=mock_ANY, stream=True)
             assert mock_get.return_value.raw.decode_content
             # check if copyfileobj called
             assert mock_copyfileobj.called
