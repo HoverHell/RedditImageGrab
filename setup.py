@@ -27,12 +27,11 @@ setup_kwargs = dict(
         ],
     },
     install_requires=[
-        # Actually, most of the dependencies are optional.
+        'requests',
     ],
     extras_require={
         'recommended': [
             'beautifulsoup4', 'lxml', 'html5lib',
-            'requests',
             'Pillow', 'python-magic',
             'pyaux', 'yaml', 'ipython', 'atomicfile',
         ],
