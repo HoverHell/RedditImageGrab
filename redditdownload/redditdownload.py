@@ -14,8 +14,10 @@ from os.path import (
     splitext as pathsplitext)
 from os import mkdir, getcwd
 import time
+
 from .gfycat import gfycat
 from .reddit import getitems
+from .deviantart import process_deviant_url
 
 
 _log = logging.getLogger('redditdownload')
