@@ -20,12 +20,12 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
     >>> # Recent items for Python.
     >>> items = getitems('python')
     >>> for item in items:
-        >>>     print '\t%s - %s' % (item['title'], item['url']) # doctest: +SKIP
+    ...     print '\t%s - %s' % (item['title'], item['url']) # doctest: +SKIP
 
     >>> # Previous items for Python.
     >>> olditems = getitems('python', ITEMS[-1]['id'])
     >>> for item in olditems:
-    >>>     print '\t%s - %s' % (item['title'], item['url']) # doctest: +SKIP
+    ...     print '\t%s - %s' % (item['title'], item['url']) # doctest: +SKIP
     """
 
     if multireddit:
