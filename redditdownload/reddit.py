@@ -14,6 +14,18 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
     :param previd: previous post id, to get more post
     :param reddit_sort: type of sorting post
     :returns: list -- list of post url
+
+    :Example:
+
+    >>> # Recent items for Python.
+    >>> items = getitems('python')
+    >>> for item in items:
+        >>>     print '\t%s - %s' % (item['title'], item['url']) # doctest: +SKIP
+
+    >>> # Previous items for Python.
+    >>> olditems = getitems('python', ITEMS[-1]['id'])
+    >>> for item in olditems:
+    >>>     print '\t%s - %s' % (item['title'], item['url']) # doctest: +SKIP
     """
 
     if multireddit:
@@ -71,14 +83,13 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
             sort_time_limit = reddit_sort[13:]
             sort_type = 'controversial'
 
-        # check if url have already query
-        if '?' in url.split('/')[-1] and is_advanced_sort:
-            url += '&'
-        else:  # url dont have query yet
-            url += '?'
-
-        # add advanced sort
         if is_advanced_sort:
+            # check if url have already query
+            if '?' in url.split('/')[-1]:
+                url += '&'
+            else:  # url dont have query yet
+                url += '?'
+            # add advanced sort
             url += 'sort={}&t={}'.format(sort_type, sort_time_limit)
 
     try:
@@ -99,15 +110,3 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
         sys.exit(error_message)
 
     return items
-
-if __name__ == "__main__":
-
-    print 'Recent items for Python.'
-    ITEMS = getitems('python')
-    for ITEM in ITEMS:
-        print '\t%s - %s' % (ITEM['title'], ITEM['url'])
-
-    print 'Previous items for Python.'
-    OLDITEMS = getitems('python', ITEMS[-1]['id'])
-    for ITEM in OLDITEMS:
-        print '\t%s - %s' % (ITEM['title'], ITEM['url'])

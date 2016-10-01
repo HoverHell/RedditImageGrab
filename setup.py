@@ -28,10 +28,16 @@ setup_kwargs = dict(
     },
     install_requires=[
         'requests',
+        # Most of the dependencies are kept as optional.
+        # The intent is to keep basic reddit+imgur available without
+        # any non-core libraries.
     ],
     extras_require={
         'recommended': [
-            'beautifulsoup4', 'lxml', 'html5lib',
+            'beautifulsoup4',
+            'lxml',
+            'html5lib',
+            'requests',
             'Pillow', 'python-magic',
             'pyaux', 'yaml', 'ipython', 'atomicfile',
         ],
