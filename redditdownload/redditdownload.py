@@ -126,7 +126,7 @@ def download_from_url(url, dest_file):
         # download first 32 bytes of the url for imghdr.
         dest_file_base, _ = pathsplitext(dest_file)
         # ... hopefully imgur shouldn't return any other types.
-        extensions = ('jpeg', 'png', 'gif')
+        extensions = ('gif', 'jpeg', 'jpg' 'png',)
         for ext in extensions:
             if pathexists('{}.{}'.format(dest_file_base, ext)):
                 error_tpl = 'URL [{url}] may already be downloaded with [{ext}] extension.'
