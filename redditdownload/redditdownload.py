@@ -137,25 +137,26 @@ def download_from_url(url, dest_file):
     info = response.info()
 
     # Work out file type either from the response or the url.
+    url_filetype_dict = {
+        'jpg': 'image/jpg',
+        'jpeg': 'image/jpg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'mp4': 'video/mp4',
+        'webm': 'video/webm',
+    }
     if 'content-type' in info.keys():
         filetype = info['content-type']
-    elif url.endswith('.jpg') or url.endswith('.jpeg'):
-        filetype = 'image/jpeg'
-    elif url.endswith('.png'):
-        filetype = 'image/png'
-    elif url.endswith('.gif'):
-        filetype = 'image/gif'
-    elif url.endswith('.mp4'):
-        filetype = 'video/mp4'
-    elif url.endswith('.webm'):
-        filetype = 'video/webm'
+    elif any(url.endswith('.' + x) for x in url_filetype_dict):
+        filetype_key = list(filter(lambda x: url.endswith('.' + x), url_filetype_dict))[0]
+        filetype = url_filetype_dict[filetype_key]
     else:
         filetype = 'unknown'
 
     # TODO?: check the dest_file again with the filetype-specific extension replace?
 
     # Only try to download acceptable image types
-    if filetype not in ('image/jpeg', 'image/png', 'image/gif', 'video/webm', 'video/mp4'):
+    if filetype not in [x for __, x in url_filetype_dict.items()]:
         raise WrongFileTypeException('WRONG FILE TYPE: %s has type: %s!' % (url, filetype))
 
     filedata = response.read()
