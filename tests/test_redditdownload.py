@@ -5,6 +5,7 @@ from os import (
     getcwd,
     path,
 )
+from urllib2 import HTTPError
 from unittest import TestCase
 import unittest
 try:  # py3
@@ -147,6 +148,19 @@ class TestDownloadFromUrl(TestCase):
             dfu_mock_open.assert_any_call(dest_file, 'wb')
             assert mock.call().write(mock_request(url).read()) in dfu_mock_open.mock_calls
             assert mock.call().close() in dfu_mock_open.mock_calls
+
+    @mock.patch('redditdownload.redditdownload.request')
+    @mock.patch('redditdownload.redditdownload.pathexists')
+    def test_removed_imgur(self, mock_pathexists, mock_request):
+        """test removed imgur."""
+        url = 'http://i.imgur.com/2gUGa.jpg'
+        remove_imgurl_url = 'http://i.imgur.com/removed.png'
+        dest_file = path.basename(url)
+        mock_pathexists.return_value = False
+        mock_request.return_value.url = remove_imgurl_url
+
+        with pytest.raises(HTTPError):
+            download_from_url(url, dest_file)
 
 if __name__ == '__main__':
     unittest.main()
