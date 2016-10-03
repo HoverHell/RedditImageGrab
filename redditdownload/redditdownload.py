@@ -108,7 +108,7 @@ def download_from_url(url, dest_file):
             when content-type is not in the supported types or cannot
             be derived from the URL
 
-        FileExceptionsException
+        FileExistsException
 
             If the filename (derived from the URL) already exists in
             the destination directory.
