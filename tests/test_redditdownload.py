@@ -41,6 +41,7 @@ class TestParseArgs(TestCase):
         self.assertFalse(ARGS.sfw)
 
 
+@pytest.mark.online
 class TestProcessDeviantUrl(TestCase):
     def setUp(self):
         self.url = 'http://shortethan.deviantart.com/art/Bumbleby-Shirts-495533842'
@@ -58,6 +59,7 @@ class TestProcessDeviantUrl(TestCase):
         self.assertGreaterEqual(len(result_url), 1)
 
 
+@pytest.mark.online
 class TestProcessImgurUrl(TestCase):
     def setUp(self):
         self.album_url = 'http://imgur.com/a/WobUS'
