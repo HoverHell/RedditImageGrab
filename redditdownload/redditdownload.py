@@ -77,6 +77,7 @@ def extract_imgur_album_urls(album_url):
         return []
 
     filedata = response.read()
+    # TODO: stop parsing HTML with regexes.
     match = re.compile(r'\"hash\":\"(.[^\"]*)\",\"title\"')
     items = []
 
