@@ -6,6 +6,7 @@ import re
 import StringIO
 import sys
 import logging
+import imghdr
 from urllib2 import urlopen, HTTPError, URLError
 from httplib import InvalidURL
 from argparse import ArgumentParser
@@ -115,6 +116,11 @@ def download_from_url(url, dest_file):
     # Don't download files multiple times!
     if pathexists(dest_file):
         raise FileExistsException('URL [%s] already downloaded.' % url)
+    elif ('.jpg' in dest_file or '.jpeg' in dest_file) and 'imgur.com' in url:
+        dest_file_ext = '.jpg' if '.jpg' in dest_file else '.jpeg'
+        if pathexists(dest_file.replace(dest_file_ext, '.png')):
+            error_txt = 'URL [{}] may already downloaded with [.png] extensions.'
+            raise FileExistsException(error_txt.format(url))
 
     response = request(url)
     info = response.info()
@@ -144,6 +150,25 @@ def download_from_url(url, dest_file):
     filehandle.write(filedata)
     filehandle.close()
 
+
+def fix_image_ext(filename):
+    """fix image extension using python imghdr."""
+    logger = logging.getLogger(__name__)
+    new_filename = None
+    basename, file_ext = pathsplitext(filename)
+    ihdr_ext = imghdr.what(filename)
+    if '.{}'.format(ihdr_ext) != file_ext and ihdr_ext is not None:
+        if ihdr_ext == 'jpeg' and file_ext in ['.jpeg', '.jpg']:
+            # don't do anything for jpg/jpeg file
+            pass
+        else:
+            new_filename = '{}.{}'.format(basename, ihdr_ext)
+    if new_filename is not None:
+        if pathexists(new_filename):
+            logger.debug('Can\'t fix file Extension, file already exist.')
+        else:
+            logger.info('Fix extension from [{}] to [{}]'.format(file_ext, ihdr_ext))
+            os.rename(filename, new_filename)
 
 def process_imgur_url(url):
     """
@@ -435,6 +460,8 @@ def main():
                         print '    Sucessfully downloaded URL [%s] as [%s].' % (URL, FILENAME)
                         DOWNLOADED += 1
                         FILECOUNT += 1
+                        if 'imgur.com' in URL:
+                            fix_image_ext(FILEPATH)
 
                     except Exception,e:
                         print '    %s' % str(e)
