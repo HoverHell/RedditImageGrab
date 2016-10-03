@@ -7,6 +7,6 @@ requests
 Pillow
 python-magic
 pyaux
-yaml
+pyyaml
 # ipython  # well, maybe not that much.
 atomicfile
