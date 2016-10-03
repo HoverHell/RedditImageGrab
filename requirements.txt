@@ -1,0 +1,12 @@
+# All the very recommended requirements, required for nearly anything except reddit+imgur.
+bs4
+lxml
+
+html5lib
+requests
+Pillow
+python-magic
+pyaux
+yaml
+# ipython  # well, maybe not that much.
+atomicfile
