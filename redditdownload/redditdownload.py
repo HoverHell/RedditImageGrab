@@ -100,7 +100,7 @@ def extract_imgur_album_urls(album_url):
 
 def download_from_url(url, dest_file):
     """
-    Attempt to download file specified by url to 'dest_file'
+    Attempt to download file specified by url to 'dest_file'.
 
     Raises:
         WrongFileTypeException
