@@ -10,6 +10,10 @@ import pytest
 from redditdownload.reddit import getitems
 
 
+BASE_URL = 'https://www.reddit.com'
+
+
+@pytest.mark.online
 def test_empty_string():
     """test with empty string input."""
     res = getitems('')
@@ -21,12 +25,12 @@ def test_empty_string():
 def test_empty_string_mock(mock_requests, mock_urlopen):
     """test empty string but with mocking external dependencies.
 
-    it will result the following url which 
-    https://www.reddit.com/r/.json 
+    it will result the following url which
+    https://www.reddit.com/r/.json
     which will redirect to json version of this url
     https://www.reddit.com/subreddits
     """
-    expected_url = 'http://www.reddit.com/r/.json'
+    expected_url = BASE_URL + '/r/.json'
     mock_resp = mock.Mock()
     mock_items = range(5)
     mock_data = [{'data' :x} for x in mock_items]
@@ -52,7 +56,7 @@ def test_sort_type(mock_requests, mock_urlopen):
     # sort_type none, input is multireddit
     sort_type = None
     reddit_input = 'some_user/m/some_multireddit'
-    expected_url = 'http://www.reddit.com/user/some_user/m/some_multireddit.json'
+    expected_url = BASE_URL + '/user/some_user/m/some_multireddit.json'
     res = getitems(reddit_input, reddit_sort=sort_type, multireddit=True)
     # test
     mock_requests.assert_called_once_with(expected_url, headers=mock.ANY)
@@ -60,7 +64,7 @@ def test_sort_type(mock_requests, mock_urlopen):
     # starting with none sort_type
     mock_requests.reset_mock()
     sort_type = None
-    expected_url = 'http://www.reddit.com/r/cats.json'
+    expected_url = BASE_URL + '/r/cats.json'
     res = getitems('cats', reddit_sort=sort_type)
     # test
     mock_requests.assert_called_once_with(expected_url, headers=mock.ANY)
@@ -69,7 +73,7 @@ def test_sort_type(mock_requests, mock_urlopen):
     for sort_type in ['hot', 'new', 'rising', 'controversial', 'top', 'gilded']:
         mock_requests.reset_mock()
         res = getitems('cats', reddit_sort=sort_type)
-        expected_url = 'http://www.reddit.com/r/cats/{}.json'.format(sort_type)
+        expected_url = BASE_URL + '/r/cats/{}.json'.format(sort_type)
         mock_requests.assert_called_once_with(expected_url, headers=mock.ANY)
 
     # test with advanced_sort
@@ -77,7 +81,7 @@ def test_sort_type(mock_requests, mock_urlopen):
         for time_limit in ['hour', 'day', 'week', 'month', 'year', 'all']:
             reddit_sort = sort_type + time_limit
             mock_requests.reset_mock()
-            url_format = 'http://www.reddit.com/r/cats/{0}.json?sort={0}&t={1}'
+            url_format = BASE_URL + '/r/cats/{0}.json?sort={0}&t={1}'
             expected_url = url_format.format(sort_type, time_limit)
 
             res = getitems('cats', reddit_sort=reddit_sort)
@@ -101,7 +105,7 @@ def test_advanced_sort_and_last_id(mock_requests, mock_urlopen):
             mock_requests.reset_mock()
 
             reddit_sort = sort_type + time_limit
-            url_format = 'http://www.reddit.com/r/cats/{0}.json?after=t3_{2}&sort={0}&t={1}'
+            url_format = BASE_URL + '/r/cats/{0}.json?after=t3_{2}&sort={0}&t={1}'
             expected_url = url_format.format(sort_type, time_limit, last_id)
 
             res = getitems('cats', reddit_sort=reddit_sort, previd=last_id)
