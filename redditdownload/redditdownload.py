@@ -115,12 +115,23 @@ def download_from_url(url, dest_file):
     """
     # Don't download files multiple times!
     if pathexists(dest_file):
-        raise FileExistsException('URL [%s] already downloaded.' % url)
-    elif ('.jpg' in dest_file or '.jpeg' in dest_file) and 'imgur.com' in url:
-        dest_file_ext = '.jpg' if '.jpg' in dest_file else '.jpeg'
-        if pathexists(dest_file.replace(dest_file_ext, '.png')):
-            error_txt = 'URL [{}] may already downloaded with [.png] extensions.'
-            raise FileExistsException(error_txt.format(url))
+        raise FileExistsException('URL [{url}] already downloaded.'.format(url=url))
+    elif re.search(r'\.jpe?g$', dest_file) and 'imgur.com' in url:
+        # Common case: imgurl url with '.jpg' or '.jpeg' slapped on.
+        #
+        # TODO?: Another solution would be to download 'abcd.jpg' and
+        # rename it to 'abcd.jpg.png' and check for such files (with glob).
+        #
+        # NOTE: it might be possible (but possibly not nice) to
+        # download first 32 bytes of the url for imghdr.
+        dest_file_base, _ = pathsplitext(dest_file)
+        # ... hopefully imgur shouldn't return any other types.
+        extensions = ('jpeg', 'png', 'gif')
+        for ext in extensions:
+            if pathexists('{}.{}'.format(dest_file_base, ext)):
+                error_tpl = 'URL [{url}] may already be downloaded with [{ext}] extension.'
+                error_txt = error_tpl.format(url=url, ext=ext)
+                raise FileExistsException(error_txt)
 
     response = request(url)
     info = response.info()
@@ -141,8 +152,10 @@ def download_from_url(url, dest_file):
     else:
         filetype = 'unknown'
 
+    # TODO?: check the dest_file again with the filetype-specific extension replace?
+
     # Only try to download acceptable image types
-    if filetype not in ['image/jpeg', 'image/png', 'image/gif', 'video/webm', 'video/mp4']:
+    if filetype not in ('image/jpeg', 'image/png', 'image/gif', 'video/webm', 'video/mp4'):
         raise WrongFileTypeException('WRONG FILE TYPE: %s has type: %s!' % (url, filetype))
 
     filedata = response.read()
@@ -152,23 +165,25 @@ def download_from_url(url, dest_file):
 
 
 def fix_image_ext(filename):
-    """fix image extension using python imghdr."""
-    logger = logging.getLogger(__name__)
-    new_filename = None
+    """ Fix image file extension using imghdr """
+    new_ext = imghdr.what(filename)
+    if not new_ext:
+        return
+
     basename, file_ext = pathsplitext(filename)
-    ihdr_ext = imghdr.what(filename)
-    if '.{}'.format(ihdr_ext) != file_ext and ihdr_ext is not None:
-        if ihdr_ext == 'jpeg' and file_ext in ['.jpeg', '.jpg']:
-            # don't do anything for jpg/jpeg file
-            pass
-        else:
-            new_filename = '{}.{}'.format(basename, ihdr_ext)
-    if new_filename is not None:
-        if pathexists(new_filename):
-            logger.debug('Can\'t fix file Extension, file already exist.')
-        else:
-            logger.info('Fix extension from [{}] to [{}]'.format(file_ext, ihdr_ext))
-            os.rename(filename, new_filename)
+    file_ext = file_ext.lstrip('.')
+    if new_ext == file_ext:
+        return  # already correct
+    elif new_ext == 'jpeg' and file_ext == 'jpg':
+        return  # good enough
+    new_filename = '{}.{}'.format(basename, new_ext)
+    if pathexists(new_filename):
+        _log.debug("Cannot fix extension because destination exists: %r -> %r",
+                   filename, new_filename)
+        return
+    _log.debug("Fixing extension from %r to %r on %r", file_ext, new_ext, filename)
+    os.rename(filename, new_filename)
+
 
 def process_imgur_url(url):
     """
@@ -204,6 +219,7 @@ def process_imgur_url(url):
         # Extract the file extension
         ext = pathsplitext(pathbasename(url))[1]
         if ext == '.gifv':
+            # XXX/TODO: replace it with '.mp4'?
             url = url.replace('.gifv', '.gif')
         if not ext:
             # Append a default
@@ -460,10 +476,11 @@ def main():
                         print '    Sucessfully downloaded URL [%s] as [%s].' % (URL, FILENAME)
                         DOWNLOADED += 1
                         FILECOUNT += 1
+                        # TODO: make an all-sites generalized case.
                         if 'imgur.com' in URL:
                             fix_image_ext(FILEPATH)
 
-                    except Exception,e:
+                    except Exception as e:
                         print '    %s' % str(e)
                         ERRORS += 1
 

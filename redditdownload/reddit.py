@@ -6,7 +6,7 @@ from urllib2 import urlopen, Request, HTTPError
 from json import JSONDecoder
 
 
-def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
+def getitems(subreddit, multireddit=False, previd='', reddit_sort=None, url_base='https://www.reddit.com'):
     """Return list of items from a subreddit.
 
     :param subreddit: subreddit to load the post
@@ -27,9 +27,6 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
     >>> for item in olditems:
     ...     print '\t%s - %s' % (item['title'], item['url']) # doctest: +SKIP
     """
-    # assume no advanced sorting.
-    is_advanced_sort = False
-    url_base = 'https://www.reddit.com'
 
     if multireddit:
         if '/m/' not in subreddit:
@@ -37,7 +34,7 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
                        'you need that multireddit flag?')
             print warning
             sys.exit(1)
-        url = '{}/user/%s.json'.format(url_base, subreddit)
+        url = '{}/user/{}.json'.format(url_base, subreddit)
     if not multireddit:
         if '/m/' in subreddit:
             warning = ('It looks like you are trying to fetch a multireddit. \n'
