@@ -6,7 +6,7 @@ from urllib2 import urlopen, Request, HTTPError
 from json import JSONDecoder
 
 
-def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
+def getitems(subreddit, multireddit=False, previd='', reddit_sort=None, url_base='https://www.reddit.com'):
     """Return list of items from a subreddit.
 
     :param subreddit: subreddit to load the post
@@ -34,7 +34,7 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
                        'you need that multireddit flag?')
             print warning
             sys.exit(1)
-        url = 'http://www.reddit.com/user/%s.json' % subreddit
+        url = '{}/user/{}.json'.format(url_base, subreddit)
     if not multireddit:
         if '/m/' in subreddit:
             warning = ('It looks like you are trying to fetch a multireddit. \n'
@@ -44,15 +44,15 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
             sys.exit(1)
         # no sorting needed
         if reddit_sort is None:
-            url = 'http://www.reddit.com/r/{}.json'.format(subreddit)
+            url = '{}/r/{}.json'.format(url_base, subreddit)
         # if sort is top or controversial, may include advanced sort (ie week, all etc)
         elif 'top' in reddit_sort:
-            url = 'http://www.reddit.com/r/{}/{}.json'.format(subreddit, 'top')
+            url = '{}/r/{}/{}.json'.format(url_base, subreddit, 'top')
         elif 'controversial' in reddit_sort:
-            url = 'http://www.reddit.com/r/{}/{}.json'.format(subreddit, 'controversial')
+            url = '{}/r/{}/{}.json'.format(url_base, subreddit, 'controversial')
         # use default
         else:
-            url = 'http://www.reddit.com/r/{}/{}.json'.format(subreddit, reddit_sort)
+            url = '{}/r/{}/{}.json'.format(url_base, subreddit, reddit_sort)
 
     # Get items after item with 'id' of previd.
 

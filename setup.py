@@ -31,16 +31,6 @@ setup_kwargs = dict(
         # The intent is to keep basic reddit+imgur available without
         # any non-core libraries.
     ],
-    extras_require={
-        'recommended': [
-            'bs4', 'lxml',
-
-            'html5lib',
-            'requests',
-            'Pillow', 'python-magic',
-            'pyaux', 'yaml', 'ipython', 'atomicfile',
-        ],
-    }
 )
 
 
