@@ -18,7 +18,6 @@ from HTMLParser import HTMLParser
 
 from .gfycat import gfycat
 from .reddit import getitems
-from . import redditupload
 from .deviantart import process_deviant_url
 
 

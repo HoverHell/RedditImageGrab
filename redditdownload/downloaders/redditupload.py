@@ -9,7 +9,7 @@ from shutil import copyfileobj
 import argparse
 import sys
 import requests
-from redditupload.downloaders.base import DownloaderPlugin, UnknownError
+from redditdownload.downloaders.base import DownloaderPlugin, UnknownError
 
 
 DOMAINS = (
@@ -40,7 +40,7 @@ def download(url, filename=None, dl_dir=None, default_ext='.jpg'):
         if '.' not in filename:
             filename = '{}{}'.format(filename, default_ext)
         if dl_dir:
-            filename = os.path.joindl_dir, basename)
+            filename = os.path.join(dl_dir, basename)
     # downlod the url.
     resp = requests.get(url, stream=True, cookies=cookies)
     if resp.status_code == 200:
