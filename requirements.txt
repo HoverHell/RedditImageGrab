@@ -1,12 +1,11 @@
 # All the very recommended requirements, required for nearly anything except reddit+imgur.
-bs4
-lxml
+bs4==0.0.1
+lxml==3.6.4
 
-html5lib
-requests
-Pillow
-python-magic
-pyaux
-yaml
-# ipython  # well, maybe not that much.
-atomicfile
+html5lib==0.999999999
+requests==2.11.1
+Pillow==3.4.0
+python-magic==0.4.12
+pyaux==1.12.0
+PyYAML==3.12
+atomicfile==1.0
