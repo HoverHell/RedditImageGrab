@@ -96,7 +96,12 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
         req = Request(url, headers=hdr)
         json = urlopen(req).read()
         data = JSONDecoder().decode(json)
-        items = [x['data'] for x in data['data']['children']]
+
+        if 'data' in data:
+            items = [x['data'] for x in data['data']['children']]
+        else:
+            items = [x['data'] for _data in data for x in _data['data']['children']]
+
     except HTTPError as ERROR:
         error_message = '\tHTTP ERROR: Code %s for %s' % (ERROR.code, url)
         sys.exit(error_message)
