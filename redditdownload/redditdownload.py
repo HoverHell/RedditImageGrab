@@ -409,10 +409,13 @@ def main():
                         if check.get("urlKnown"):
                             URL = check.get('webmUrl')
 
-                    # Trim any http query off end of file extension.
                     FILEEXT = pathsplitext(URL)[1]
-                    if '?' in FILEEXT:
-                        FILEEXT = FILEEXT[:FILEEXT.index('?')]
+                    # Trim any http query off end of file extension.
+                    FILEEXT = re.sub(r'\?.*$', '', FILEEXT)
+                    if not FILEEXT:
+                        # A more usable option that empty.
+                        # The extension can be fixed after downloading, but then the 'already downloaded' check will be harder.
+                        FILEEXT = '.jpg'
 
                     # Only append numbers if more than one file
                     FILENUM = ('_%d' % FILECOUNT if len(URLS) > 1 else '')
