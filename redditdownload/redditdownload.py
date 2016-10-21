@@ -400,6 +400,10 @@ def main():
                 _log.exception("Failed to extract urls for %r", URLS)
                 continue
             for URL in URLS:
+                extneeded = ""
+                if URL.find("&amp;") != -1: # if found a &amp;
+                    URL = URL.replace("&amp;", "&")
+                    extneeded = ".jpg"
                 try:
                     # Find gfycat if requested
                     if URL.endswith('gif') and ARGS.mirror_gfycat:
@@ -408,7 +412,7 @@ def main():
                             URL = check.get('webmUrl')
 
                     # Trim any http query off end of file extension.
-                    FILEEXT = pathsplitext(URL)[1]
+                    FILEEXT = pathsplitext(URL)[1] + extneeded
                     if '?' in FILEEXT:
                         FILEEXT = FILEEXT[:FILEEXT.index('?')]
 
