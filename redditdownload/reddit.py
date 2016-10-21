@@ -2,6 +2,7 @@
 """Return list of items from a sub-reddit of reddit.com."""
 
 import sys
+import HTMLParser
 from urllib2 import urlopen, Request, HTTPError
 from json import JSONDecoder
 
@@ -113,5 +114,14 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
     except KeyboardInterrupt as ERROR:
         error_message = '\tKeyboardInterrupt: url:{}.'.format(url)
         sys.exit(error_message)
+
+    # This is weird but apparently necessary: reddit's json data
+    # returns `url` values html-escaped, whereas we normally need them
+    # in the way they are meant to be downloaded (i.e. urlquoted at
+    # most).
+    htmlparser = HTMLParser.HTMLParser()
+    for item in items:
+        if item.get('url'):
+            item['url'] = htmlparser.unescape(item['url'])
 
     return items
