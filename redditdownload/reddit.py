@@ -28,6 +28,9 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
     >>> for item in olditems:
     ...     print '\t%s - %s' % (item['title'], item['url']) # doctest: +SKIP
     """
+    # assume no advanced sorting.
+    is_advanced_sort = False
+    url_base = 'https://www.reddit.com'
 
     if multireddit:
         if '/m/' not in subreddit:
@@ -35,7 +38,7 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
                        'you need that multireddit flag?')
             print warning
             sys.exit(1)
-        url = 'http://www.reddit.com/user/%s.json' % subreddit
+        url = '{}/user/%s.json'.format(url_base, subreddit)
     if not multireddit:
         if '/m/' in subreddit:
             warning = ('It looks like you are trying to fetch a multireddit. \n'
@@ -45,15 +48,15 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
             sys.exit(1)
         # no sorting needed
         if reddit_sort is None:
-            url = 'http://www.reddit.com/r/{}.json'.format(subreddit)
+            url = '{}/r/{}.json'.format(url_base, subreddit)
         # if sort is top or controversial, may include advanced sort (ie week, all etc)
         elif 'top' in reddit_sort:
-            url = 'http://www.reddit.com/r/{}/{}.json'.format(subreddit, 'top')
+            url = '{}/r/{}/{}.json'.format(url_base, subreddit, 'top')
         elif 'controversial' in reddit_sort:
-            url = 'http://www.reddit.com/r/{}/{}.json'.format(subreddit, 'controversial')
+            url = '{}/r/{}/{}.json'.format(url_base, subreddit, 'controversial')
         # use default
         else:
-            url = 'http://www.reddit.com/r/{}/{}.json'.format(subreddit, reddit_sort)
+            url = '{}/r/{}/{}.json'.format(url_base, subreddit, reddit_sort)
 
     # Get items after item with 'id' of previd.
 
