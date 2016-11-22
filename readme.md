@@ -77,6 +77,14 @@ doesn't exist yet) run:
 
     python redditdl.py cats ~/Pictures/catsfolder --score 1000 --num 5 --sfw --verbose
 
+To download from certain thread, you can use thread id. The valid command are following:
+
+    python redditdl.py --last 508k37 gaming
+
+To download from multireddit from an user run:
+
+    python redditdl.py someuser/m/some_multireddit
+
 
 ## Advanced Examples
 
