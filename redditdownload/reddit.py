@@ -28,6 +28,8 @@ def getitems(subreddit, multireddit=False, previd='', reddit_sort=None):
     >>> for item in olditems:
     ...     print '\t%s - %s' % (item['title'], item['url']) # doctest: +SKIP
     """
+    # assume no advanced sorting.
+    is_advanced_sort = False
 
     if multireddit:
         if '/m/' not in subreddit:
