@@ -16,6 +16,7 @@ from os.path import (
     splitext as pathsplitext)
 from os import mkdir, getcwd
 import time
+import math
 
 from .gfycat import gfycat
 from .reddit import getitems
@@ -253,6 +254,8 @@ def parse_args(args):
                         help='Minimum score of images to download.')
     PARSER.add_argument('--num', metavar='n', default=1000, type=int, required=False,
                         help='Number of images to download. Set to 0 to disable the limit')
+    PARSER.add_argument('--timestamps', metavar='ts', default=None, type=int, required=False, nargs='*',
+                        help='Performs reddit search between two UNIX timestamps')
     PARSER.add_argument('--update', default=False, action='store_true', required=False,
                         help='Run until you encounter a file already downloaded.')
     PARSER.add_argument('--sfw', default=False, action='store_true', required=False,
@@ -302,7 +305,6 @@ def main():
     print(parse_reddit_argument(ARGS.reddit))
 
     TOTAL = DOWNLOADED = ERRORS = SKIPPED = FAILED = 0
-    FINISHED = False
 
     # Create the specified directory if it doesn't already exist.
     if not pathexists(ARGS.dir):
@@ -325,167 +327,200 @@ def main():
     if sort_type:
         sort_type = sort_type.lower()
 
-    while not FINISHED:
-        ITEMS = getitems(
-            ARGS.reddit, multireddit=ARGS.multireddit, previd=LAST,
-            reddit_sort=sort_type)
+    timestamps = ARGS.timestamps
+    if timestamps is not None and len(timestamps) != 2:
+        print('Error: Timestamp must be 2 values!')
+        exit(1)
 
-        # measure time and set the program to wait 4 second between request
-        # as per reddit api guidelines
-        end_time = time.clock()
+    # Divide interval of small intervals of 3 days each.
+    # If the interval was larger, not all items might be returned per interval.
+    three_days_diff = 3 * 86400
+    if timestamps is None:
+        subintervals = 1
+    else:
+        subintervals = int(math.ceil(timestamps[1] - timestamps[0]) / three_days_diff)
+        print('Dividing timestep interval into {} small sub-intervals'.format(subintervals))
+    for si in range(subintervals):
+        if timestamps is not None:
+            # search from newest to oldest
+            interval = (max(timestamps[0], timestamps[1] - (si + 1) * three_days_diff),
+                        timestamps[1] - si * three_days_diff)
+            if si >= 1:
+                LAST = None
 
-        if start_time is not None:
-            elapsed_time = end_time - start_time
+            print('Search in sub-interval [{}, {}]'.format(interval[0], interval[1]))
+        else:
+            interval = None
 
-            if elapsed_time <= 4:  # throttling
-                time.sleep(4 - elapsed_time)
+        FINISHED = False
 
-        start_time = time.clock()
+        while not FINISHED:
+            ITEMS = getitems(
+                ARGS.reddit, multireddit=ARGS.multireddit, previd=LAST,
+                reddit_sort=sort_type,
+                search_timestamps=interval)
 
-        if not ITEMS:
-            # No more items to process
-            break
+            # measure time and set the program to wait 4 second between request
+            # as per reddit api guidelines
+            end_time = time.clock()
 
-        for ITEM in ITEMS:
-            TOTAL += 1
+            if start_time is not None:
+                elapsed_time = end_time - start_time
 
-            # not downloading if url is reddit comment
-            if ('reddit.com/r/' + ARGS.reddit + '/comments/' in ITEM['url'] or
-                    re.match(reddit_comment_regex, ITEM['url']) is not None):
-                print('    Skip:[{}]'.format(ITEM['url']))
-                continue
+                if elapsed_time <= 4:  # throttling
+                    time.sleep(4 - elapsed_time)
 
-            if ITEM['score'] < ARGS.score:
-                if ARGS.verbose:
-                    print('    SCORE: {} has score of {}'.format(ITEM['id'], ITEM['score']),
-                          'which is lower than required score of {}.'.format(ARGS.score))
+            start_time = time.clock()
 
-                SKIPPED += 1
-                continue
-            elif ARGS.sfw and ITEM['over_18']:
-                if ARGS.verbose:
-                    print('    NSFW: %s is marked as NSFW.' % (ITEM['id']))
-
-                SKIPPED += 1
-                continue
-            elif ARGS.nsfw and not ITEM['over_18']:
-                if ARGS.verbose:
-                    print('    Not NSFW, skipping %s' % (ITEM['id']))
-
-                SKIPPED += 1
-                continue
-            elif ARGS.regex and not re.match(RE_RULE, ITEM['title']):
-                if ARGS.verbose:
-                    print('    Regex not matched')
-
-                SKIPPED += 1
-                continue
-            elif ARGS.skipAlbums and 'imgur.com/a/' in ITEM['url']:
-                if ARGS.verbose:
-                    print('    Album found, skipping %s' % (ITEM['id']))
-
-                SKIPPED += 1
-                continue
-
-            if ARGS.title_contain and ARGS.title_contain.lower() not in ITEM['title'].lower():
-                if ARGS.verbose:
-                    print('    Title does not contain "{}",'.format(ARGS.title_contain),
-                          'skipping {}'.format(ITEM['id']))
-
-                SKIPPED += 1
-                continue
-
-            FILECOUNT = 0
-            try:
-                URLS = extract_urls(ITEM['url'])
-            except Exception:
-                _log.exception("Failed to extract urls for %r", URLS)
-                continue
-            for URL in URLS:
-                try:
-                    # Find gfycat if requested
-                    if URL.endswith('gif') and ARGS.mirror_gfycat:
-                        check = gfycat().check(URL)
-                        if check.get("urlKnown"):
-                            URL = check.get('webmUrl')
-
-                    FILEEXT = pathsplitext(URL)[1]
-                    # Trim any http query off end of file extension.
-                    FILEEXT = re.sub(r'\?.*$', '', FILEEXT)
-                    if not FILEEXT:
-                        # A more usable option that empty.
-                        # The extension can be fixed after downloading, but then the 'already downloaded' check will be harder.
-                        FILEEXT = '.jpg'
-
-                    # Only append numbers if more than one file
-                    FILENUM = ('_%d' % FILECOUNT if len(URLS) > 1 else '')
-
-                    # create filename based on given input from user
-                    if ARGS.filename_format == 'url':
-                        FILENAME = '%s%s%s' % (pathsplitext(pathbasename(URL))[0], '', FILEEXT)
-                    elif ARGS.filename_format == 'title':
-                        FILENAME = '%s%s%s' % (slugify(ITEM['title']), FILENUM, FILEEXT)
-                        if len(FILENAME) >= 256:
-                            shortened_item_title = slugify(ITEM['title'])[:256-len(FILENAME)]
-                            FILENAME = '%s%s%s' % (shortened_item_title, FILENUM, FILEEXT)
-                    else:
-                        FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)
-                    # join file with directory
-                    FILEPATH = pathjoin(ARGS.dir, FILENAME)
-
-                    # Improve debuggability list URL before download too.
-                    # url may be wrong so skip that
-                    if URL.encode('utf-8') == 'http://':
-                        raise URLError('Url is empty')
-                    else:
-                        text_templ = '    Attempting to download URL[{}] as [{}].'
-                        print(text_templ.format(URL.encode('utf-8'), FILENAME.encode('utf-8')))
-
-                    # Download the image
-                    try:
-                        download_from_url(URL, FILEPATH)
-                        # Image downloaded successfully!
-                        print('    Sucessfully downloaded URL [%s] as [%s].' % (URL, FILENAME))
-                        DOWNLOADED += 1
-                        FILECOUNT += 1
-
-                    except Exception as exc:
-                        print('    %s' % (exc,))
-                        ERRORS += 1
-
-                    if ARGS.num and DOWNLOADED >= ARGS.num:
-                        FINISHED = True
-                        break
-                except WrongFileTypeException as ERROR:
-                    print('    %s' % (ERROR,))
-                    _log_wrongtype(url=URL, target_dir=ARGS.dir,
-                                   filecount=FILECOUNT, _downloaded=DOWNLOADED,
-                                   filename=FILENAME)
-                    SKIPPED += 1
-                except FileExistsException as ERROR:
-                    print('    %s' % (ERROR,))
-                    ERRORS += 1
-                    if ARGS.update:
-                        print('    Update complete, exiting.')
-                        FINISHED = True
-                        break
-                except HTTPError as ERROR:
-                    print('    HTTP ERROR: Code %s for %s.' % (ERROR.code, URL))
-                    FAILED += 1
-                except URLError as ERROR:
-                    print('    URL ERROR: %s!' % (URL,))
-                    FAILED += 1
-                except InvalidURL as ERROR:
-                    print('    Invalid URL: %s!' % (URL,))
-                    FAILED += 1
-                except Exception as exc:
-                    _log.exception("Problem with %r: %r", URL, exc)
-                    FAILED += 1
-
-            if FINISHED:
+            if not ITEMS:
+                # No more items to process
                 break
 
-        LAST = ITEM['id'] if ITEM is not None else None
+            for ITEM in ITEMS:
+                TOTAL += 1
+
+                # not downloading if url is reddit comment
+                if ('reddit.com/r/' + ARGS.reddit + '/comments/' in ITEM['url'] or
+                            re.match(reddit_comment_regex, ITEM['url']) is not None):
+                    #print('    Skip:[{}]'.format(ITEM['url']))
+                    continue
+
+                if ITEM['score'] < ARGS.score:
+                    if ARGS.verbose:
+                        print('    SCORE: {} has score of {}'.format(ITEM['id'], ITEM['score']),
+                              'which is lower than required score of {}.'.format(ARGS.score))
+
+                    SKIPPED += 1
+                    continue
+                elif ARGS.sfw and ITEM['over_18']:
+                    if ARGS.verbose:
+                        print('    NSFW: %s is marked as NSFW.' % (ITEM['id']))
+
+                    SKIPPED += 1
+                    continue
+                elif ARGS.nsfw and not ITEM['over_18']:
+                    if ARGS.verbose:
+                        print('    Not NSFW, skipping %s' % (ITEM['id']))
+
+                    SKIPPED += 1
+                    continue
+                elif ARGS.regex and not re.match(RE_RULE, ITEM['title']):
+                    if ARGS.verbose:
+                        print('    Regex not matched')
+
+                    SKIPPED += 1
+                    continue
+                elif ARGS.skipAlbums and 'imgur.com/a/' in ITEM['url']:
+                    if ARGS.verbose:
+                        print('    Album found, skipping %s' % (ITEM['id']))
+
+                    SKIPPED += 1
+                    continue
+
+                if ARGS.title_contain and ARGS.title_contain.lower() not in ITEM['title'].lower():
+                    if ARGS.verbose:
+                        print('    Title does not contain "{}",'.format(ARGS.title_contain),
+                              'skipping {}'.format(ITEM['id']))
+
+                    SKIPPED += 1
+                    continue
+
+                FILECOUNT = 0
+                try:
+                    URLS = extract_urls(ITEM['url'])
+                except Exception:
+                    _log.exception("Failed to extract urls for %r", URLS)
+                    continue
+                for URL in URLS:
+                    try:
+                        # Find gfycat if requested
+                        if URL.endswith('gif') and ARGS.mirror_gfycat:
+                            check = gfycat().check(URL)
+                            if check.get("urlKnown"):
+                                URL = check.get('webmUrl')
+
+                        FILEEXT = pathsplitext(URL)[1]
+                        # Trim any http query off end of file extension.
+                        FILEEXT = re.sub(r'\?.*$', '', FILEEXT)
+                        if not FILEEXT:
+                            # A more usable option that empty.
+                            # The extension can be fixed after downloading, but then the 'already downloaded' check will be harder.
+                            FILEEXT = '.jpg'
+
+                        # Only append numbers if more than one file
+                        FILENUM = ('_%d' % FILECOUNT if len(URLS) > 1 else '')
+
+                        # create filename based on given input from user
+                        if ARGS.filename_format == 'url':
+                            FILENAME = '%s%s%s' % (pathsplitext(pathbasename(URL))[0], '', FILEEXT)
+                        elif ARGS.filename_format == 'title':
+                            FILENAME = '%s%s%s' % (slugify(ITEM['title']), FILENUM, FILEEXT)
+                            if len(FILENAME) >= 256:
+                                shortened_item_title = slugify(ITEM['title'])[:256 - len(FILENAME)]
+                                FILENAME = '%s%s%s' % (shortened_item_title, FILENUM, FILEEXT)
+                        else:
+                            FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)
+                        # join file with directory
+                        FILEPATH = pathjoin(ARGS.dir, FILENAME)
+
+                        # Improve debuggability list URL before download too.
+                        # url may be wrong so skip that
+                        if URL.encode('utf-8') == 'http://':
+                            raise URLError('Url is empty')
+                        else:
+                            text_templ = '    Attempting to download URL[{}] as [{}]'
+                            print(text_templ.format(URL.encode('utf-8'), FILENAME.encode('utf-8')))
+
+                        # Download the image
+                        try:
+                            download_from_url(URL, FILEPATH)
+                            # Image downloaded successfully!
+                            text_templ = '    Successfully downloaded URL[{}] as [{}]'
+                            print(text_templ.format(URL, FILENAME))
+                            DOWNLOADED += 1
+                            FILECOUNT += 1
+
+                        except Exception as exc:
+                            print('    %s' % (exc,))
+                            ERRORS += 1
+
+                        if ARGS.num and DOWNLOADED >= ARGS.num:
+                            FINISHED = True
+                            break
+                    except WrongFileTypeException as ERROR:
+                        print('    %s' % (ERROR,))
+                        _log_wrongtype(url=URL, target_dir=ARGS.dir,
+                                       filecount=FILECOUNT, _downloaded=DOWNLOADED,
+                                       filename=FILENAME)
+                        SKIPPED += 1
+                    except FileExistsException as ERROR:
+                        print('    %s' % (ERROR,))
+                        ERRORS += 1
+                        if ARGS.update:
+                            print('    Update complete, exiting.')
+                            FINISHED = True
+                            break
+                    except HTTPError as ERROR:
+                        print('    HTTP ERROR: Code %s for %s.' % (ERROR.code, URL))
+
+                        if HTTPError.code == 503:
+                            print('Waiting 10 seconds before resuming')
+                            time.sleep(10)
+                        FAILED += 1
+                    except URLError as ERROR:
+                        print('    URL ERROR: %s!' % (URL,))
+                        FAILED += 1
+                    except InvalidURL as ERROR:
+                        print('    Invalid URL: %s!' % (URL,))
+                        FAILED += 1
+                    except Exception as exc:
+                        _log.exception("Problem with %r: %r", URL, exc)
+                        FAILED += 1
+
+                if FINISHED:
+                    break
+
+            LAST = ITEM['id'] if ITEM is not None else None
 
     print('Downloaded {} files'.format(DOWNLOADED),
           '(Processed {}, Skipped {}, Exists {})'.format(TOTAL, SKIPPED, ERRORS))
