@@ -442,16 +442,11 @@ def main():
                         print(text_templ.format(URL.encode('utf-8'), FILENAME.encode('utf-8')))
 
                     # Download the image
-                    try:
-                        download_from_url(URL, FILEPATH)
-                        # Image downloaded successfully!
-                        print('    Sucessfully downloaded URL [%s] as [%s].' % (URL, FILENAME))
-                        DOWNLOADED += 1
-                        FILECOUNT += 1
-
-                    except Exception as exc:
-                        print('    %s' % (exc,))
-                        ERRORS += 1
+                    download_from_url(URL, FILEPATH)
+                    # Image downloaded successfully!
+                    print('    Sucessfully downloaded URL [%s] as [%s].' % (URL, FILENAME))
+                    DOWNLOADED += 1
+                    FILECOUNT += 1
 
                     if ARGS.num and DOWNLOADED >= ARGS.num:
                         FINISHED = True
