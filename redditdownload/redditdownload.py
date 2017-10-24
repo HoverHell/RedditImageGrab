@@ -3,6 +3,7 @@
 
 from __future__ import print_function
 
+import json
 import os
 import re
 import StringIO
@@ -49,7 +50,6 @@ _WRONGDATA_LOGFILE = os.environ.get('WRONGDATA_LOGFILE')
 def _log_wrongtype(_logfile=_WRONGDATA_LOGFILE, **kwa):
     if not _logfile:
         return
-    import json
     data = json.dumps(kwa) + "\n"
     with open(_logfile, 'a', 1) as f:
         f.write(data)
@@ -261,6 +261,8 @@ def parse_args(args):
                         help='Download NSFW images only.')
     PARSER.add_argument('--filename-format', default='reddit', required=False,
                         help='Specify filename format: reddit (default), title or url')
+    PARSER.add_argument('--write-metadata', default=False, action='store_true', required=False,
+                        help='Write metadata in <filename>.json.')
     PARSER.add_argument('--title-contain', metavar='TEXT', required=False,
                         help='Download only if title contain text (case insensitive)')
     PARSER.add_argument('--regex', default=None, action='store', required=False,
@@ -432,6 +434,14 @@ def main():
                         FILENAME = '%s%s%s' % (ITEM['id'], FILENUM, FILEEXT)
                     # join file with directory
                     FILEPATH = pathjoin(ARGS.dir, FILENAME)
+                    # write metadata if we were asked for it
+                    if ARGS.write_metadata:
+                        METAPATH = os.path.splitext(FILEPATH)[0] + ".json"
+                        with open(METAPATH, 'w') as fp:
+                            json.dump({
+                                "url": URL,
+                                "item": ITEM,
+                            }, fp, indent=4, separators=(',', ': '))
 
                     # Improve debuggability list URL before download too.
                     # url may be wrong so skip that
@@ -442,16 +452,11 @@ def main():
                         print(text_templ.format(URL.encode('utf-8'), FILENAME.encode('utf-8')))
 
                     # Download the image
-                    try:
-                        download_from_url(URL, FILEPATH)
-                        # Image downloaded successfully!
-                        print('    Sucessfully downloaded URL [%s] as [%s].' % (URL, FILENAME))
-                        DOWNLOADED += 1
-                        FILECOUNT += 1
-
-                    except Exception as exc:
-                        print('    %s' % (exc,))
-                        ERRORS += 1
+                    download_from_url(URL, FILEPATH)
+                    # Image downloaded successfully!
+                    print('    Sucessfully downloaded URL [%s] as [%s].' % (URL, FILENAME))
+                    DOWNLOADED += 1
+                    FILECOUNT += 1
 
                     if ARGS.num and DOWNLOADED >= ARGS.num:
                         FINISHED = True
