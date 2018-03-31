@@ -72,7 +72,7 @@ have, run the following:
 
     python redditdl.py wallpaper wallpaper --score 50 -update
 
-For getting some nice pictures of cats in your catsfolder (wich will be created if it
+For getting some nice pictures of cats in your catsfolder (which will be created if it
 doesn't exist yet) run:
 
     python redditdl.py cats ~/Pictures/catsfolder --score 1000 --num 5 --sfw --verbose
