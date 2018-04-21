@@ -1,1 +1,1 @@
-from redditdownload import *
+from .redditdownload import *

@@ -1,6 +1,6 @@
 """module to parse deviantart page."""
 try:  # py2
-    from urllib2 import urlopen
+    from urllib.request import urlopen
 except ImportError:  # py3
     from urllib.request import urlopen
 
