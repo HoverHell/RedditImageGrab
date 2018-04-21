@@ -1,20 +1,11 @@
-[![Build Status](https://travis-ci.org/HoverHell/RedditImageGrab.svg?branch=master)](https://travis-ci.org/HoverHell/RedditImageGrab)
-
 # RedditImageGrab
-
-I created this script to download the latest (and greatest) wallpapers
-off of image subreddits like wallpaper to keep my desktop wallpaper
-fresh and interesting. The main idea is that the script would download
-any JPEG or PNG formatted image that it found listed in the specified
-subreddit and download them to a folder.
+Forked and Python 3 updated version.
 
 
 # Requirements:
 
- * Python 2 (Python3 might be supported over 2to3, but see for
-   yourself and report back).
+ * Python 3
  * Optional requirements: listed in setup.py under extras_require.
-
 
 # Usage:
 
