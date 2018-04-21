@@ -3,7 +3,7 @@
 """ Scrap stuff from "wrong data type" pages of RedditImageGrab """
 
 try:
-    from redditdownload import _WRONGDATA_LOGFILE
+    from .redditdownload import _WRONGDATA_LOGFILE
 except ImportError:
     _WRONGDATA_LOGFILE = '.wrong_type_pages.jsl'
 
@@ -30,8 +30,8 @@ import hashlib
 from atomicfile import AtomicFile
 import magic
 
-import img_scrap_stuff
-from img_scrap_stuff import GetError
+from . import img_scrap_stuff
+from .img_scrap_stuff import GetError
 
 
 _log = logging.getLogger(__name__)
@@ -108,7 +108,7 @@ def consecutive_filename(filename):
         filebase, fileext = fileparts[0], None
     else:
         filebase, fileext = fileparts
-    for i in xrange(1, 9000):
+    for i in range(1, 9000):
         filetry = '%s__%02d' % (filebase, i)
         if fileext is not None:
             filetry = '%s.%s' % (filetry, fileext)

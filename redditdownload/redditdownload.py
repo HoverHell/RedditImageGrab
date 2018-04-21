@@ -1,15 +1,15 @@
 #!/usr/bin/env python2
 """Download images from a reddit.com subreddit."""
 
-from __future__ import print_function
+
 
 import os
 import re
-import StringIO
+import io
 import sys
 import logging
-from urllib2 import urlopen, HTTPError, URLError
-from httplib import InvalidURL
+from urllib.request import urlopen, HTTPError, URLError
+from http.client import InvalidURL
 from argparse import ArgumentParser
 from os.path import (
     exists as pathexists, join as pathjoin, basename as pathbasename,
@@ -17,7 +17,6 @@ from os.path import (
 from os import mkdir, getcwd
 import time
 
-from .gfycat import gfycat
 from .reddit import getitems
 from .deviantart import process_deviant_url
 
@@ -29,7 +28,7 @@ def request(url, *ar, **kwa):
     _retries = kwa.pop('_retries', 4)
     _retry_pause = kwa.pop('_retry_pause', 0)
     res = None
-    for _try in xrange(_retries):
+    for _try in range(_retries):
         try:
             res = urlopen(url, *ar, **kwa)
         except Exception as exc:
@@ -83,7 +82,7 @@ def extract_imgur_album_urls(album_url):
     match = re.compile(r'\"hash\":\"(.[^\"]*)\",\"title\"')
     items = []
 
-    memfile = StringIO.StringIO(filedata)
+    memfile = io.StringIO.StringIO(filedata)
 
     for line in memfile.readlines():
         results = re.findall(match, line)
@@ -130,7 +129,7 @@ def download_from_url(url, dest_file):
         raise HTTPError(actual_url, 404, "Imgur suggests the image was removed", None, None)
 
     # Work out file type either from the response or the url.
-    if 'content-type' in info.keys():
+    if 'content-type' in list(info.keys()):
         filetype = info['content-type']
     elif url.endswith('.jpg') or url.endswith('.jpeg'):
         filetype = 'image/jpeg'
@@ -232,7 +231,7 @@ def slugify(value):
     # with some modification
     import unicodedata
     value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
-    value = unicode(re.sub(r'[^\w\s-]', '', value).strip())
+    value = str(re.sub(r'[^\w\s-]', '', value).strip())
     # value = re.sub(r'[-\s]+', '-', value) # not replacing space with hypen
     return value
 
