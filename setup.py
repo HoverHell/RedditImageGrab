@@ -23,7 +23,7 @@ setup_kwargs = dict(
     packages=['redditdownload'],
     entry_points={
         'console_scripts': [
-            'redditdl.py = redditdownload.redditdownload:main [redditdl]',
+            'redditdl.py = redditdownload.redditdownload:main',
         ],
     },
     install_requires=[
@@ -32,9 +32,6 @@ setup_kwargs = dict(
         # any non-core libraries.
     ],
     extras_require={
-        'redditdl.py': [
-            'bs4'
-        ],
         'recommended': [
             'bs4', 'lxml',
 
