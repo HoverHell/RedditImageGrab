@@ -108,7 +108,7 @@ def consecutive_filename(filename):
         filebase, fileext = fileparts[0], None
     else:
         filebase, fileext = fileparts
-    for i in xrange(1, 9000):
+    for i in range(1, 9000):
         filetry = '%s__%02d' % (filebase, i)
         if fileext is not None:
             filetry = '%s.%s' % (filetry, fileext)

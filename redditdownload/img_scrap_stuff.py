@@ -14,15 +14,18 @@ import urlparse
 import traceback
 
 from PIL import Image
-from cStringIO import StringIO
-import lxml
-import html5lib  # Heavily recommended for bs4 (apparently)
 import bs4
 import requests
 import magic  # python-magic
 
 import pyaux
 
+from . import running_python2
+
+if running_python2():
+    from cStringIO import StringIO
+else:
+    from io import StringIO
 
 # Config-ish
 _requests_params = dict(timeout=20, verify=False)  ## Also global-ish stuff
@@ -52,7 +55,7 @@ def indexall_re(topstr, substr_re):
 def walker(text, opening='{', closing='}'):
     """ A near-useless experiment that was intended for `get_all_objects` """
     stack = []
-    for pos in xrange(len(text)):
+    for pos in range(len(text)):
         if text[pos:pos + len(opening)] == opening:
             stack.append(pos)
             continue
@@ -88,7 +91,7 @@ def get_all_objects(text, beginning=r'{', debug=False):
     """
 
     def _dbg_actual(st, *ar):
-        print "D: ", st % ar
+        print("D: ", st % ar)
 
     _dbg = _dbg_actual if debug else (lambda *ar: None)
 
@@ -106,7 +109,6 @@ def get_all_objects(text, beginning=r'{', debug=False):
     class TheLoader(yaml.SafeLoader):
         ESCAPE_REPLACEMENTS = ddd(yaml.SafeLoader.ESCAPE_REPLACEMENTS)
 
-    from cStringIO import StringIO
     # optimised slicing
     if isinstance(text, unicode):
         _dbg("encoding")
@@ -205,7 +207,7 @@ def get_get_get(url, **kwa):
     params = dict(_requests_params)
     params.update(kwa)
     reqr = get_reqr()
-    
+
     try:
         return reqr.get(url, **params)
     except Exception as exc:
@@ -214,13 +216,13 @@ def get_get_get(url, **kwa):
 
 def get_get(*ar, **kwa):
     retries = kwa.pop('_xretries', 5)
-    for retry in xrange(retries):
+    for retry in range(retries):
         try:
             return get_get_get(*ar, **kwa)
         except Exception as exc:
             traceback.print_exc()
             ee = exc
-            print "On retry #%r   (%s)" % (retry, repr(exc)[:30])
+            print("On retry #%r   (%s)" % (retry, repr(exc)[:30]))
     raise GetError(ee)
 
 
@@ -244,7 +246,7 @@ def get(url, cache_file=None, req_params=None, bs=True, response=False, undecode
             for chunk in resp.iter_content(chunk_size=16384):
                 data += chunk
                 if len(data) > _max_len:
-                    print "Too large"
+                    print("Too large")
                     break
             data = bytes(data)  ## Have to, alas.
             data_bytes = data
