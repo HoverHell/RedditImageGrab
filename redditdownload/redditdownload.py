@@ -1,15 +1,10 @@
 #!/usr/bin/env python2
 """Download images from a reddit.com subreddit."""
 
-from __future__ import print_function
-
 import os
 import re
-import StringIO
 import sys
 import logging
-from urllib2 import urlopen, HTTPError, URLError
-from httplib import InvalidURL
 from argparse import ArgumentParser
 from os.path import (
     exists as pathexists, join as pathjoin, basename as pathbasename,
@@ -20,7 +15,17 @@ import time
 from .gfycat import gfycat
 from .reddit import getitems
 from .deviantart import process_deviant_url
+from . import running_python2
 
+if running_python2():
+    from cStringIO import StringIO
+    from urllib2 import urlopen, HTTPError, URLError
+    from httplib import InvalidURL
+else:
+    from io import StringIO
+    import urllib
+    from urllib.request import urlopen, HTTPError, URLError
+    from http.client import InvalidURL
 
 _log = logging.getLogger('redditdownload')
 
@@ -29,7 +34,7 @@ def request(url, *ar, **kwa):
     _retries = kwa.pop('_retries', 4)
     _retry_pause = kwa.pop('_retry_pause', 0)
     res = None
-    for _try in xrange(_retries):
+    for _try in range(_retries):
         try:
             res = urlopen(url, *ar, **kwa)
         except Exception as exc:
@@ -83,7 +88,7 @@ def extract_imgur_album_urls(album_url):
     match = re.compile(r'\"hash\":\"(.[^\"]*)\",\"title\"')
     items = []
 
-    memfile = StringIO.StringIO(filedata)
+    memfile = StringIO(filedata)
 
     for line in memfile.readlines():
         results = re.findall(match, line)
@@ -326,9 +331,13 @@ def main():
         sort_type = sort_type.lower()
 
     while not FINISHED:
-        ITEMS = getitems(
-            ARGS.reddit, multireddit=ARGS.multireddit, previd=LAST,
-            reddit_sort=sort_type)
+        try:
+            ITEMS = getitems(
+                ARGS.reddit, multireddit=ARGS.multireddit, previd=LAST,
+                reddit_sort=sort_type)
+        except urllib.error.URLError as e:
+            print('    Error trying to get items: {}'.format(str(e)))
+            continue
 
         # measure time and set the program to wait 4 second between request
         # as per reddit api guidelines

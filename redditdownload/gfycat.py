@@ -30,7 +30,7 @@ class gfycat(object):
             headers = {'User-Agent': 'Mozilla/5.0'}
             req = urllib2.Request(url+param, None, headers)
             connection = urllib2.urlopen(req).read()
-        except urllib2.HTTPError, err:
+        except urllib2.HTTPError as err:
             raise ValueError(err.read())
         result = namedtuple("result", "raw json")
         return result(raw=connection, json=json.loads(connection))
@@ -132,7 +132,7 @@ class _gfycatUtils(object):
             data = file.read()
             with open(location, "wb") as mp4:
                 mp4.write(data)
-        except urllib2.HTTPError, err:
+        except urllib2.HTTPError as err:
             raise ValueError(err.read())
 
     def formated(self, ignoreNull=False):
