@@ -70,7 +70,7 @@ wallpaper would be as follows:
 And to run the same query but only get new images you don't already
 have, run the following:
 
-    python redditdl.py wallpaper wallpaper --score 50 -update
+    python redditdl.py wallpaper wallpaper --score 50 --update
 
 For getting some nice pictures of cats in your catsfolder (wich will be created if it
 doesn't exist yet) run:
