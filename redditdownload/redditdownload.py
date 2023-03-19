@@ -1,21 +1,22 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """Download images from a reddit.com subreddit."""
 
 from __future__ import print_function
 
 import os
 import re
-import StringIO
+from io import StringIO
 import sys
 import logging
-from urllib2 import urlopen, HTTPError, URLError
-from httplib import InvalidURL
+from urllib.request import urlopen, HTTPError, URLError
+from http.client import InvalidURL
 from argparse import ArgumentParser
 from os.path import (
     exists as pathexists, join as pathjoin, basename as pathbasename,
     splitext as pathsplitext)
 from os import mkdir, getcwd
 import time
+import pdb
 
 from .gfycat import gfycat
 from .reddit import getitems
@@ -29,7 +30,7 @@ def request(url, *ar, **kwa):
     _retries = kwa.pop('_retries', 4)
     _retry_pause = kwa.pop('_retry_pause', 0)
     res = None
-    for _try in xrange(_retries):
+    for _try in range(_retries):
         try:
             res = urlopen(url, *ar, **kwa)
         except Exception as exc:
@@ -332,7 +333,7 @@ def main():
 
         # measure time and set the program to wait 4 second between request
         # as per reddit api guidelines
-        end_time = time.clock()
+        end_time = time.perf_counter()
 
         if start_time is not None:
             elapsed_time = end_time - start_time
@@ -340,7 +341,7 @@ def main():
             if elapsed_time <= 4:  # throttling
                 time.sleep(4 - elapsed_time)
 
-        start_time = time.clock()
+        start_time = time.perf_counter()
 
         if not ITEMS:
             # No more items to process
@@ -439,6 +440,7 @@ def main():
                         raise URLError('Url is empty')
                     else:
                         text_templ = '    Attempting to download URL[{}] as [{}].'
+                        #pdb.set_trace()
                         print(text_templ.format(URL.encode('utf-8'), FILENAME.encode('utf-8')))
 
                     # Download the image
