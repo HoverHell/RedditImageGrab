@@ -21,6 +21,7 @@ import pdb
 from .gfycat import gfycat
 from .reddit import getitems
 from .deviantart import process_deviant_url
+from PIL import Image, ImageDraw, ImageFont, ImageColor
 
 
 _log = logging.getLogger('redditdownload')
@@ -233,8 +234,12 @@ def slugify(value):
     # with some modification
     import unicodedata
     value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
-    value = unicode(re.sub(r'[^\w\s-]', '', value).strip())
-    # value = re.sub(r'[-\s]+', '-', value) # not replacing space with hypen
+    tmp0 = re.sub(r'[^\w\s-]', '', value.decode())
+    tmp1 = tmp0.strip()
+    value = str(tmp1)
+    #value = unicode(re.sub(r'[^\w\s-]', '', value.decode()).strip())
+    #value = str(re.sub(r'[^\w\s-]', '', value.decode()).strip())
+    #value = re.sub(r'[-\s]+', '-', value) # not replacing space with hypen
     return value
 
 
@@ -295,6 +300,22 @@ def parse_reddit_argument(reddit_args):
         # print in one line but with nicer format
         return 'Downloading images from "{}" subreddit'.format(', '.join(reddit_args.split('+')))
 
+#Read a file, and write back file name to the image itself. 
+#Write in some random localtion, using a default font that exists everywhere. 
+#Note that I just want to get some o/p out. I can (hopefully) improve it later.
+#TODO: This writing only works for still images, not for gifs.
+def writeTitleIntoImage(filename):
+    img = Image.open(filename)
+    draw = ImageDraw.Draw(img)
+    textToWrite = filename 
+    myFont = ImageFont.truetype('FreeMono.ttf', 65)
+    
+    draw.text((140, 100), textToWrite, font=myFont, fill='black')
+    draw.text((540, 120), textToWrite, font=myFont, fill='gray')
+    draw.text((140, 520), textToWrite, font=myFont, fill='yellow')
+    
+    #img.show()
+    img.save(filename) #Write to the same file!
 
 def main():
     ARGS = parse_args(sys.argv[1:])
@@ -450,6 +471,9 @@ def main():
                         print('    Sucessfully downloaded URL [%s] as [%s].' % (URL, FILENAME))
                         DOWNLOADED += 1
                         FILECOUNT += 1
+                        #DOwnload successful. Now write the file name INTO the IMAGE.
+                        #If an exception is thrown, it is caught and we move on to next picture/gif
+                        writeTitleIntoImage(FILENAME);
 
                     except Exception as exc:
                         print('    %s' % (exc,))
