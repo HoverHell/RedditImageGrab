@@ -17,6 +17,9 @@ from os.path import (
 from os import mkdir, getcwd
 import time
 import pdb
+import nltk
+# nltk.download('punkt')
+# nltk.download('averaged_perceptron_tagger')
 
 from .gfycat import gfycat
 from .reddit import getitems
@@ -304,24 +307,52 @@ def parse_reddit_argument(reddit_args):
 #Write in some random localtion, using a default font that exists everywhere. 
 #Note that I just want to get some o/p out. I can (hopefully) improve it later.
 #TODO: This writing only works for still images, not for gifs.
+
+
+def extract_nouns(text):
+    nouns = []
+    tokens = nltk.word_tokenize(text)
+    tagged_words = nltk.pos_tag(tokens)
+    for word, pos in tagged_words:
+        if pos.startswith('N'):
+            nouns.append(word)
+    return nouns
+
 def writeTitleIntoImage(filename):
     img = Image.open(filename)
     draw = ImageDraw.Draw(img)
-    textToWrite = filename
+    textToWrite0 = filename
+    textToWrite00 = extract_nouns(textToWrite0)
+    textToWrite1 = ' '.join(textToWrite00)
     myFont = ImageFont.truetype('FreeMono.ttf', 65)
 
+    pattern_order = ['x', 'OC', r'\.jpg', r'\.jpeg', r'[0-9]', r'\.png', r'\.webm', r'\.gifs']
+
+    for pattern in pattern_order:
+        if re.search(pattern, textToWrite1):
+            textToWrite2 = re.sub(pattern, '', textToWrite1)
+            textToWrite1 = textToWrite2
+
+    textToWrite = textToWrite1
+
     text_width, text_height = draw.textsize(textToWrite, font=myFont)
-    # draw.text((140, 100), textToWrite, font=myFont, fill='black')
-    # draw.text((540, 120), textToWrite, font=myFont, fill='gray')
-    # draw.text((140, 520), textToWrite, font=myFont, fill='yellow')
-    position = (img.width - img.height - 350, img.height - 100)
+    img_width, img_height = img.size
+
+    if img_width < img_height:
+        position = ((img_height - img_width) // 2, img_height - text_height - 100)
+    else:
+        position = ((img_width - img_height) // 2, img_height - text_height - 100)
+
     draw.rectangle(
-        ((position[0] - 10, position[1] - 5), (position[0] + text_width + 10, position[1] + text_height + 20)),
+        [(position[0] - 10, position[1] - 5), (position[0] + text_width + 10, position[1] + text_height + 20)],
         fill='white')
     draw.text(position, textToWrite, font=myFont, fill='blue')
     # img.show()
     img.save(filename)  # Write to the same file!
 
+    # draw.text((140, 100), textToWrite, font=myFont, fill='black')
+    # draw.text((540, 120), textToWrite, font=myFont, fill='gray')
+    # draw.text((140, 520), textToWrite, font=myFont, fill='yellow')
 def main():
     ARGS = parse_args(sys.argv[1:])
 
