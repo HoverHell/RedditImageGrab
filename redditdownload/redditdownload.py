@@ -343,9 +343,9 @@ def writeTitleIntoImage(filename):
     img_width, img_height = img.size
 
     if img_width < img_height:
-        position = ((img_height - img_width) // 2, img_height - text_height - 100)
+        position = ((img_height - img_width) // 2, img_height - text_height - 200)
     else:
-        position = ((img_width - img_height) // 2, img_height - text_height - 100)
+        position = ((img_width - img_height) // 2, img_height - text_height - 200)
 
     draw.rectangle(
         [(position[0] - 10, position[1] - 5), (position[0] + text_width + 10, position[1] + text_height + 20)],
@@ -363,50 +363,42 @@ def writeTitleIntoImage(filename):
 # def configure():
 #     load_dotenv()
 
-# def get_first_comment_from_post(url):
-#     # reddit = praw.Reddit(client_id=os.getenv('client__id'),
-#     #                      client_secret=os.getenv('client__secret'),
-#     #                      user_agent='TextOnImage')
-#     reddit = praw.Reddit(client_id='YlKEE-XuC3JZ8suil445rw',
-#                          client_secret='WueypZMnVZY7x1t6aA_u59blYuBMmA',
-#                          user_agent='TextOnImage')
-#
-#     post_id = url.split('/')[-2]
-#
-#     try:
-#         # Get the Reddit post
-#         post = reddit.submission(id=post_id)
-#
-#         # Get the first comment
-#         first_comment = post.comments[0].body
-#
-#         return first_comment
-#
-#     except Exception as e:
-#         print("Error: ", str(e))
-#         return None
-#
-#
-#
-# def writeCommentIntoImage(filename, url):
-#     img = Image.open(filename)
-#     draw = ImageDraw.Draw(img)
-#     myFont = ImageFont.truetype('FreeMono.ttf', 65)
-#     textToWrite = get_first_comment_from_post(url)
-#     text_width, text_height = draw.textsize(textToWrite, font=myFont)
-#     img_width, img_height = img.size
-#
-#     if img_width < img_height:
-#         position = ((img_height - img_width) // 2, img_height - text_height - 300)
-#     else:
-#         position = ((img_width - img_height) // 2, img_height - text_height - 300)
-#
-#     draw.rectangle(
-#         [(position[0] - 10, position[1] - 5), (position[0] + text_width + 10, position[1] + text_height + 20)],
-#         fill='white')
-#     draw.text(position, textToWrite, font=myFont, fill='blue')
-#     # img.show()
-#     img.save(filename)  # Write to the same file!
+def get_first_comment_from_post(post_id):
+
+    reddit = praw.Reddit(client_id='',
+                         client_secret='',
+                         user_agent=''
+                         )
+    # return url
+
+    # post_id = '13vxtfl'
+
+    post = reddit.submission(id=post_id)
+
+    first_comment = post.comments[1].body
+
+    return first_comment
+
+
+def writeCommentIntoImage(filename, url):
+    img = Image.open(filename)
+    draw = ImageDraw.Draw(img)
+    myFont = ImageFont.truetype('FreeMono.ttf', 55)
+    textToWrite = get_first_comment_from_post(url)
+    text_width, text_height = draw.textsize(textToWrite, font=myFont)
+    img_width, img_height = img.size
+
+    if img_width < img_height:
+        position = ((img_height - img_width) // 2, img_height - text_height - 100)
+    else:
+        position = ((img_width - img_height) // 2, img_height - text_height - 100)
+
+    draw.rectangle(
+        [(position[0] - 10, position[1] - 5), (position[0] + text_width + 10, position[1] + text_height + 20)],
+        fill='white')
+    draw.text(position, textToWrite, font=myFont, fill='blue')
+    # img.show()
+    img.save(filename)  # Write to the same file!
 
 
 def main():
@@ -463,6 +455,8 @@ def main():
 
         for ITEM in ITEMS:
             TOTAL += 1
+            # data = json.loads(ITEM)
+            comment_url = ITEM["id"]
 
             # not downloading if url is reddit comment
             if ('reddit.com/r/' + ARGS.reddit + '/comments/' in ITEM['url'] or
@@ -566,9 +560,9 @@ def main():
                         FILECOUNT += 1
                         #DOwnload successful. Now write the file name INTO the IMAGE.
                         #If an exception is thrown, it is caught and we move on to next picture/gif
-                        writeTitleIntoImage(FILENAME);
-                        # comm = get_first_comment_from_post(URL)
-                        # writeCommentIntoImage(FILENAME, comm)
+                        writeTitleIntoImage(FILENAME)
+                        comm = get_first_comment_from_post(comment_url)
+                        writeCommentIntoImage(FILENAME, comm)
 
                     except Exception as exc:
                         print('    %s' % (exc,))
