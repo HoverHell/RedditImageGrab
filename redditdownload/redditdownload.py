@@ -307,15 +307,20 @@ def parse_reddit_argument(reddit_args):
 def writeTitleIntoImage(filename):
     img = Image.open(filename)
     draw = ImageDraw.Draw(img)
-    textToWrite = filename 
+    textToWrite = filename
     myFont = ImageFont.truetype('FreeMono.ttf', 65)
-    
-    draw.text((140, 100), textToWrite, font=myFont, fill='black')
-    draw.text((540, 120), textToWrite, font=myFont, fill='gray')
-    draw.text((140, 520), textToWrite, font=myFont, fill='yellow')
-    
-    #img.show()
-    img.save(filename) #Write to the same file!
+
+    text_width, text_height = draw.textsize(textToWrite, font=myFont)
+    # draw.text((140, 100), textToWrite, font=myFont, fill='black')
+    # draw.text((540, 120), textToWrite, font=myFont, fill='gray')
+    # draw.text((140, 520), textToWrite, font=myFont, fill='yellow')
+    position = (img.width - img.height - 350, img.height - 100)
+    draw.rectangle(
+        ((position[0] - 10, position[1] - 5), (position[0] + text_width + 10, position[1] + text_height + 20)),
+        fill='white')
+    draw.text(position, textToWrite, font=myFont, fill='blue')
+    # img.show()
+    img.save(filename)  # Write to the same file!
 
 def main():
     ARGS = parse_args(sys.argv[1:])
