@@ -104,6 +104,7 @@ def extract_imgur_album_urls(album_url):
     return urls
 
 
+
 def download_from_url(url, dest_file):
     """
     Attempt to download file specified by url to 'dest_file'
@@ -303,8 +304,8 @@ def parse_reddit_argument(reddit_args):
         # print in one line but with nicer format
         return 'Downloading images from "{}" subreddit'.format(', '.join(reddit_args.split('+')))
 
-#Read a file, and write back file name to the image itself. 
-#Write in some random localtion, using a default font that exists everywhere. 
+#Read a file, and write back file name to the image itself.
+#Write in some random localtion, using a default font that exists everywhere.
 #Note that I just want to get some o/p out. I can (hopefully) improve it later.
 #TODO: This writing only works for still images, not for gifs.
 
@@ -353,6 +354,53 @@ def writeTitleIntoImage(filename):
     # draw.text((140, 100), textToWrite, font=myFont, fill='black')
     # draw.text((540, 120), textToWrite, font=myFont, fill='gray')
     # draw.text((140, 520), textToWrite, font=myFont, fill='yellow')
+
+import praw
+
+def get_first_comment_from_post(url):
+    # Create a Reddit instance
+    reddit = praw.Reddit(client_id='ID',
+                         client_secret='secret key',
+                         user_agent='TextOnImage')
+
+    # Extract the post ID from the URL
+    post_id = url.split('/')[-2]
+
+    try:
+        # Get the Reddit post
+        post = reddit.submission(id=post_id)
+
+        # Get the first comment
+        first_comment = post.comments[0].body
+
+        return first_comment
+
+    except Exception as e:
+        print("Error: ", str(e))
+        return None
+
+
+def writeCommentIntoImage(filename, url):
+    img = Image.open(filename)
+    draw = ImageDraw.Draw(img)
+    myFont = ImageFont.truetype('FreeMono.ttf', 65)
+    textToWrite = get_first_comment_from_post(url)
+    text_width, text_height = draw.textsize(textToWrite, font=myFont)
+    img_width, img_height = img.size
+
+    if img_width < img_height:
+        position = ((img_height - img_width) // 2, img_height - text_height - 300)
+    else:
+        position = ((img_width - img_height) // 2, img_height - text_height - 300)
+
+    draw.rectangle(
+        [(position[0] - 10, position[1] - 5), (position[0] + text_width + 10, position[1] + text_height + 20)],
+        fill='white')
+    draw.text(position, textToWrite, font=myFont, fill='blue')
+    # img.show()
+    img.save(filename)  # Write to the same file!
+
+
 def main():
     ARGS = parse_args(sys.argv[1:])
 
@@ -510,6 +558,8 @@ def main():
                         #DOwnload successful. Now write the file name INTO the IMAGE.
                         #If an exception is thrown, it is caught and we move on to next picture/gif
                         writeTitleIntoImage(FILENAME);
+                        comm = get_first_comment_from_post(URL)
+                        writeCommentIntoImage(FILENAME, comm)
 
                     except Exception as exc:
                         print('    %s' % (exc,))
