@@ -23,14 +23,14 @@ class gfycat(object):
         super(gfycat, self).__init__()
 
     def __fetch(self, url, param):
-        import urllib2
+        import urllib
         import json
         try:
             # added simple User-Ajent string to avoid CloudFlare block this request
             headers = {'User-Agent': 'Mozilla/5.0'}
-            req = urllib2.Request(url+param, None, headers)
-            connection = urllib2.urlopen(req).read()
-        except urllib2.HTTPError, err:
+            req = urllib.request.Request(url+param, None, headers)
+            connection = urllib.request.urlopen(req).read()
+        except urllib.request.HTTPError as err:
             raise ValueError(err.read())
         result = namedtuple("result", "raw json")
         return result(raw=connection, json=json.loads(connection))
@@ -117,22 +117,22 @@ class _gfycatUtils(object):
             return ("Sorry, can't find %s" % error)
 
     def download(self, location):
-        import urllib2
+        import urllib
         if not location.endswith(".mp4"):
             location = location + self.get("gfyName") + ".mp4"
         try:
             # added simple User-Ajent string to avoid CloudFlare block this request
             headers = {'User-Agent': 'Mozilla/5.0'}
-            req = urllib2.Request(self.get("mp4Url"), None, headers)
-            file = urllib2.urlopen(req)
+            req = urllib.Request(self.get("mp4Url"), None, headers)
+            file = urllib.urlopen(req)
             # make sure that the status code is 200, and the content type is mp4
-            if int(file.code) is not 200 or file.headers["content-type"] != "video/mp4":
+            if int(file.code) != 200 or file.headers["content-type"] != "video/mp4":
                 raise ValueError("Problem downlading the file. Status code is %s or the content-type is not right %s"
                     % (file.code, file.headers["content-type"]))
             data = file.read()
             with open(location, "wb") as mp4:
                 mp4.write(data)
-        except urllib2.HTTPError, err:
+        except urllib.error.HTTPError as err:
             raise ValueError(err.read())
 
     def formated(self, ignoreNull=False):

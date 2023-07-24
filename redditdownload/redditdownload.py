@@ -1,25 +1,33 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """Download images from a reddit.com subreddit."""
 
 from __future__ import print_function
 
 import os
 import re
-import StringIO
+from io import StringIO
 import sys
 import logging
-from urllib2 import urlopen, HTTPError, URLError
-from httplib import InvalidURL
+import praw
+# from dotenv import load_dotenv
+from urllib.request import urlopen, HTTPError, URLError
+from http.client import InvalidURL
 from argparse import ArgumentParser
 from os.path import (
     exists as pathexists, join as pathjoin, basename as pathbasename,
     splitext as pathsplitext)
 from os import mkdir, getcwd
 import time
+import pdb
+import nltk
+import textwrap
+# nltk.download('punkt')
+# nltk.download('averaged_perceptron_tagger')
 
 from .gfycat import gfycat
 from .reddit import getitems
 from .deviantart import process_deviant_url
+from PIL import Image, ImageDraw, ImageFont, ImageColor
 
 
 _log = logging.getLogger('redditdownload')
@@ -29,7 +37,7 @@ def request(url, *ar, **kwa):
     _retries = kwa.pop('_retries', 4)
     _retry_pause = kwa.pop('_retry_pause', 0)
     res = None
-    for _try in xrange(_retries):
+    for _try in range(_retries):
         try:
             res = urlopen(url, *ar, **kwa)
         except Exception as exc:
@@ -97,6 +105,7 @@ def extract_imgur_album_urls(album_url):
     urls = ['http://i.imgur.com/%s.jpg' % (imghash) for imghash in items]
 
     return urls
+
 
 
 def download_from_url(url, dest_file):
@@ -232,8 +241,12 @@ def slugify(value):
     # with some modification
     import unicodedata
     value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
-    value = unicode(re.sub(r'[^\w\s-]', '', value).strip())
-    # value = re.sub(r'[-\s]+', '-', value) # not replacing space with hypen
+    tmp0 = re.sub(r'[^\w\s-]', '', value.decode())
+    tmp1 = tmp0.strip()
+    value = str(tmp1)
+    #value = unicode(re.sub(r'[^\w\s-]', '', value.decode()).strip())
+    #value = str(re.sub(r'[^\w\s-]', '', value.decode()).strip())
+    #value = re.sub(r'[-\s]+', '-', value) # not replacing space with hypen
     return value
 
 
@@ -294,8 +307,102 @@ def parse_reddit_argument(reddit_args):
         # print in one line but with nicer format
         return 'Downloading images from "{}" subreddit'.format(', '.join(reddit_args.split('+')))
 
+#Read a file, and write back file name to the image itself.
+#Write in some random localtion, using a default font that exists everywhere.
+#Note that I just want to get some o/p out. I can (hopefully) improve it later.
+#TODO: This writing only works for still images, not for gifs.
+
+
+def extract_nouns(text):
+    nouns = []
+    tokens = nltk.word_tokenize(text)
+    tagged_words = nltk.pos_tag(tokens)
+    for word, pos in tagged_words:
+        if pos.startswith('N'):
+            nouns.append(word)
+    return nouns
+
+def writeTitleIntoImage(filename):
+    img = Image.open(filename)
+    draw = ImageDraw.Draw(img)
+    textToWrite0 = filename
+    textToWrite00 = extract_nouns(textToWrite0)
+    textToWrite1 = ' '.join(textToWrite00)
+    myFont = ImageFont.truetype('FreeMono.ttf', 55)
+
+    pattern_order = ['x', 'OC', r'\.jpg', r'\.jpeg', r'[0-9]', r'\.png', r'\.webm', r'\.gifs']
+
+    for pattern in pattern_order:
+        if re.search(pattern, textToWrite1):
+            textToWrite2 = re.sub(pattern, '', textToWrite1)
+            textToWrite1 = textToWrite2
+
+    textToWrite = textToWrite1.capitalize()
+
+    text_width, text_height = draw.textsize(textToWrite, font=myFont)
+    img_width, img_height = img.size
+
+    if img_width < img_height:
+        position = ((img_height - img_width) // 2, img_height - text_height - 200)
+    else:
+        position = ((img_width - img_height) // 2, img_height - text_height - 200)
+
+    draw.rectangle(
+        [(position[0] - 10, position[1] - 5), (position[0] + text_width + 10, position[1] + text_height + 20)],
+        fill='white')
+    draw.text(position, textToWrite, font=myFont, fill='blue')
+    # img.show()
+    img.save(filename)  # Write to the same file!
+
+    # draw.text((140, 100), textToWrite, font=myFont, fill='black')
+    # draw.text((540, 120), textToWrite, font=myFont, fill='gray')
+    # draw.text((140, 520), textToWrite, font=myFont, fill='yellow')
+
+
+
+# def configure():
+#     load_dotenv()
+
+def get_first_comment_from_post(post_id):
+
+    reddit = praw.Reddit(client_id='',
+                         client_secret='',
+                         user_agent=''
+                         )
+    # return url
+
+    # post_id = '13vxtfl'
+
+    post = reddit.submission(id=post_id)
+
+    first_comment = post.comments[1].body
+
+    return first_comment
+
+
+def writeCommentIntoImage(filename, url):
+    img = Image.open(filename)
+    draw = ImageDraw.Draw(img)
+    myFont = ImageFont.truetype('FreeMono.ttf', 55)
+    textToWrite = get_first_comment_from_post(url)
+    text_width, text_height = draw.textsize(textToWrite, font=myFont)
+    img_width, img_height = img.size
+
+    if img_width < img_height:
+        position = ((img_height - img_width) // 2, img_height - text_height - 100)
+    else:
+        position = ((img_width - img_height) // 2, img_height - text_height - 100)
+
+    draw.rectangle(
+        [(position[0] - 10, position[1] - 5), (position[0] + text_width + 10, position[1] + text_height + 20)],
+        fill='white')
+    draw.text(position, textToWrite, font=myFont, fill='blue')
+    # img.show()
+    img.save(filename)  # Write to the same file!
+
 
 def main():
+    # configure()
     ARGS = parse_args(sys.argv[1:])
 
     logging.basicConfig(level=logging.INFO)
@@ -332,7 +439,7 @@ def main():
 
         # measure time and set the program to wait 4 second between request
         # as per reddit api guidelines
-        end_time = time.clock()
+        end_time = time.perf_counter()
 
         if start_time is not None:
             elapsed_time = end_time - start_time
@@ -340,7 +447,7 @@ def main():
             if elapsed_time <= 4:  # throttling
                 time.sleep(4 - elapsed_time)
 
-        start_time = time.clock()
+        start_time = time.perf_counter()
 
         if not ITEMS:
             # No more items to process
@@ -348,6 +455,8 @@ def main():
 
         for ITEM in ITEMS:
             TOTAL += 1
+            # data = json.loads(ITEM)
+            comment_url = ITEM["id"]
 
             # not downloading if url is reddit comment
             if ('reddit.com/r/' + ARGS.reddit + '/comments/' in ITEM['url'] or
@@ -439,6 +548,7 @@ def main():
                         raise URLError('Url is empty')
                     else:
                         text_templ = '    Attempting to download URL[{}] as [{}].'
+                        #pdb.set_trace()
                         print(text_templ.format(URL.encode('utf-8'), FILENAME.encode('utf-8')))
 
                     # Download the image
@@ -448,6 +558,11 @@ def main():
                         print('    Sucessfully downloaded URL [%s] as [%s].' % (URL, FILENAME))
                         DOWNLOADED += 1
                         FILECOUNT += 1
+                        #DOwnload successful. Now write the file name INTO the IMAGE.
+                        #If an exception is thrown, it is caught and we move on to next picture/gif
+                        writeTitleIntoImage(FILENAME)
+                        comm = get_first_comment_from_post(comment_url)
+                        writeCommentIntoImage(FILENAME, comm)
 
                     except Exception as exc:
                         print('    %s' % (exc,))
